@@ -4,6 +4,7 @@
 """TODO"""
 
 
+import datetime
 import logging
 import sys
 from typing import Generator
@@ -20,10 +21,17 @@ def extract_dataframes(fil: str) -> Generator[pandas.core.frame.DataFrame, None,
             yield table.df[1:]
 
 
+def date(dataframe: pandas.core.frame.DataFrame) -> datetime.date:
+    """TODO"""
+    first_date = dataframe[0][2]
+    month, day, year = [int(token) for token in first_date.split("/")]
+    return datetime.date(year, month, day)
+
+
 def main(files) -> None:
     """TODO"""
     for fil in files:
-        dataframes = list(extract_dataframes(fil))
+        dataframes = sorted(extract_dataframes(fil), key=date)
         if not dataframes:
             logging.warning('File "%s" had nothing to extract', fil)
 
