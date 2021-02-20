@@ -4,6 +4,7 @@
 """TODO"""
 
 
+import logging
 import sys
 from typing import Generator
 
@@ -24,11 +25,12 @@ def main(files) -> None:
     for fil in files:
         dataframes = list(extract_dataframes(fil))
         if not dataframes:
-            print(f"File {fil} had nothing to extract", file=sys.stderr)
+            logging.warning('File "%s" had nothing to extract', fil)
 
         for dataframe in dataframes:
             print(dataframe.to_csv())
 
 
 if __name__ == "__main__":
+    logging.basicConfig()
     main(sys.argv[1:])
