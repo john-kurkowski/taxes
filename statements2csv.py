@@ -40,6 +40,7 @@ def extract_dataframes(fil: str) -> Generator[Extraction, None, None]:
             extraction = extractor(table.df)
             if extraction:
                 yield extraction
+                break
 
 
 def main(files) -> None:
