@@ -10,6 +10,7 @@ import sys
 from typing import Generator, NamedTuple, Optional
 
 import camelot
+import dateutil.parser
 import pandas
 
 
@@ -24,9 +25,9 @@ def extract_applecard(dataframe: pandas.core.frame.DataFrame) -> Optional[Extrac
     if not is_match:
         return None
 
-    first_date = dataframe[0][3]
-    month, day, year = [int(token) for token in first_date.split("/")]
-    return Extraction(datetime.date(year, month, day), dataframe[1:])
+    first_date_str = dataframe[0][3]
+    first_date = dateutil.parser.parse(first_date_str)
+    return Extraction(first_date, dataframe[1:])
 
 
 def extract_dataframes(fil: str) -> Generator[Extraction, None, None]:
