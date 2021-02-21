@@ -45,7 +45,10 @@ def extract_capitalone(dataframe: pandas.core.frame.DataFrame) -> Optional[Extra
 
 def extract_chase(dataframe: pandas.core.frame.DataFrame) -> Optional[Extraction]:
     """TODO"""
-    is_match = dataframe[0][0].lower().strip().startswith('account activity')
+    first_cell = dataframe[0][0].lower().strip()
+    is_match = any(
+        first_cell.startswith(sentinel) for sentinel in ("account activity", "date of")
+    )
     if not is_match:
         return None
 
@@ -55,7 +58,9 @@ def extract_chase(dataframe: pandas.core.frame.DataFrame) -> Optional[Extraction
         except ValueError:
             return None
 
-    first_date = next(date for date in (try_date(cell) for cell in dataframe[0]) if date)
+    first_date = next(
+        date for date in (try_date(cell) for cell in dataframe[0]) if date
+    )
     return Extraction(first_date, dataframe[2:])
 
 
