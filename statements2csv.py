@@ -30,9 +30,22 @@ def extract_applecard(dataframe: pandas.core.frame.DataFrame) -> Optional[Extrac
     return Extraction(first_date, dataframe[1:])
 
 
+def extract_capitalone(dataframe: pandas.core.frame.DataFrame) -> Optional[Extraction]:
+    """TODO"""
+    dates = [val.lower() for val in dataframe[0].values]
+    try:
+        header_idx = dates.index("date")
+    except ValueError:
+        return None
+
+    first_date_str = dates[header_idx + 1]
+    first_date = dateutil.parser.parse(first_date_str)
+    return Extraction(first_date, dataframe[3:])
+
+
 def extract_dataframes(fil: str) -> Generator[Extraction, None, None]:
     """TODO"""
-    extractors = (extract_applecard,)
+    extractors = (extract_applecard, extract_capitalone)
 
     tables = camelot.read_pdf(fil, pages="all", flavor="stream")
     for table in tables:
