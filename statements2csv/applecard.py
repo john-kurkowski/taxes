@@ -7,36 +7,51 @@
 import datetime
 import logging
 import sys
-from typing import Generator
+from typing import Generator, NamedTuple, Optional
 
 import camelot
 import pandas
 
 
-def extract_dataframes(fil: str) -> Generator[pandas.core.frame.DataFrame, None, None]:
+class Extraction(NamedTuple):
+    date: datetime.date
+    dataframe: pandas.core.frame.DataFrame
+
+
+def extract_applecard(dataframe: pandas.core.frame.DataFrame) -> Optional[Extraction]:
     """TODO"""
+    is_match = dataframe[0][0].lower().strip() == "transactions"
+    if not is_match:
+        return None
+
+    first_date = dataframe[0][3]
+    month, day, year = [int(token) for token in first_date.split("/")]
+    return Extraction(datetime.date(year, month, day), dataframe[1:])
+
+
+def extract_dataframes(fil: str) -> Generator[Extraction, None, None]:
+    """TODO"""
+    extractors = (extract_applecard,)
+
     tables = camelot.read_pdf(fil, pages="all", flavor="stream")
     for table in tables:
-        if table.df[0][0].lower().strip() == "transactions":
-            yield table.df[1:]
-
-
-def date(dataframe: pandas.core.frame.DataFrame) -> datetime.date:
-    """TODO"""
-    first_date = dataframe[0][2]
-    month, day, year = [int(token) for token in first_date.split("/")]
-    return datetime.date(year, month, day)
+        for extractor in extractors:
+            extraction = extractor(table.df)
+            if extraction:
+                yield extraction
 
 
 def main(files) -> None:
     """TODO"""
     for fil in files:
-        dataframes = sorted(extract_dataframes(fil), key=date)
-        if not dataframes:
+        extractions = sorted(
+            extract_dataframes(fil), key=lambda extraction: extraction.date
+        )
+        if not extractions:
             logging.warning('File "%s" had nothing to extract', fil)
 
-        for dataframe in dataframes:
-            print(dataframe.to_csv())
+        for extraction in extractions:
+            print(extraction.dataframe.to_csv())
 
 
 if __name__ == "__main__":
