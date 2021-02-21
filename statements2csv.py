@@ -46,9 +46,7 @@ def extract_dataframes(fil: str) -> Generator[Extraction, None, None]:
 def main(files) -> None:
     """TODO"""
     for fil in files:
-        extractions = sorted(
-            extract_dataframes(fil), key=lambda extraction: extraction.date
-        )
+        extractions = list(extract_dataframes(fil))
         if not extractions:
             logging.warning('File "%s" had nothing to extract', fil)
 
