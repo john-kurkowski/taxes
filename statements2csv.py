@@ -43,9 +43,25 @@ def extract_capitalone(dataframe: pandas.core.frame.DataFrame) -> Optional[Extra
     return Extraction(first_date, dataframe[3:])
 
 
+def extract_chase(dataframe: pandas.core.frame.DataFrame) -> Optional[Extraction]:
+    """TODO"""
+    is_match = dataframe[0][0].lower().strip().startswith('account activity')
+    if not is_match:
+        return None
+
+    def try_date(cell) -> Optional[datetime.date]:
+        try:
+            return dateutil.parser.parse(cell)
+        except ValueError:
+            return None
+
+    first_date = next(date for date in (try_date(cell) for cell in dataframe[0]) if date)
+    return Extraction(first_date, dataframe[2:])
+
+
 def extract_dataframes(fil: str) -> Generator[Extraction, None, None]:
     """TODO"""
-    extractors = (extract_applecard, extract_capitalone)
+    extractors = (extract_applecard, extract_capitalone, extract_chase)
 
     tables = camelot.read_pdf(fil, pages="all", flavor="stream")
     for table in tables:
