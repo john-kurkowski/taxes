@@ -15,6 +15,8 @@ import pandas
 
 
 class Extraction(NamedTuple):
+    """TODO"""
+
     date: datetime.date
     dataframe: pandas.core.frame.DataFrame
 

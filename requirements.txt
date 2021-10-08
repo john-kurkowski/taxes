@@ -1,2 +1,4 @@
 camelot-py[all]
 pandas
+pandas-stubs
+types-python-dateutil
