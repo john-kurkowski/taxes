@@ -6,10 +6,12 @@
 
 import datetime
 import logging
+import pathlib
 import sys
-from typing import Generator, NamedTuple, Optional
+from typing import Generator, Iterable, NamedTuple, Optional
 
 import camelot
+import click
 import dateutil.parser
 import pandas
 
@@ -79,15 +81,17 @@ def extract_dataframes(fil: str) -> Generator[Extraction, None, None]:
                 break
 
 
-def main(files) -> None:
-    """TODO"""
+@click.command()
+@click.argument("files", nargs=-1, required=True, type=pathlib.Path)
+def main(files: Iterable[pathlib.Path]) -> None:
+    """Convert FILES bank statement PDFs to CSV on stdout."""
     for fil in files:
-        extractions = list(extract_dataframes(fil))
+        extractions = list(extract_dataframes(str(fil)))
         if not extractions:
             logging.warning('File "%s" had nothing to extract', fil)
 
         for extraction in extractions:
-            print(extraction.dataframe.to_csv())
+            click.echo(extraction.dataframe.to_csv())
 
 
 if __name__ == "__main__":
