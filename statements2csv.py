@@ -75,12 +75,17 @@ def extract_dataframes(fil: str) -> Generator[Extraction, None, None]:
 
     tables = camelot.read_pdf(fil, pages="all", flavor="stream")
     for table in tables:
-        for extractor in extractors:
-            extraction = extractor(table.df)
-            if extraction:
-                logging.info('Extractor "%s" found something', extractor)
-                yield extraction
-                break
+        try:
+            extractor, extraction = next(
+                (extractor, extraction)
+                for extractor in extractors
+                if (extraction := extractor(table.df))
+            )
+        except StopIteration:
+            continue
+
+        logging.info('Extractor "%s" found something', extractor)
+        yield extraction
 
 
 @click.command()
