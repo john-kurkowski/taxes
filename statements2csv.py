@@ -6,6 +6,7 @@
 
 import datetime
 import logging
+import os
 import pathlib
 import sys
 from typing import Generator, Iterable, NamedTuple, Optional
@@ -77,6 +78,7 @@ def extract_dataframes(fil: str) -> Generator[Extraction, None, None]:
         for extractor in extractors:
             extraction = extractor(table.df)
             if extraction:
+                logging.info('Extractor "%s" found something', extractor)
                 yield extraction
                 break
 
@@ -95,5 +97,5 @@ def main(files: Iterable[pathlib.Path]) -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig()
+    logging.basicConfig(level=os.environ.get("LOGLEVEL", "WARNING").upper())
     main(sys.argv[1:])
