@@ -11,7 +11,7 @@ import pathlib
 import sys
 from typing import Generator, Iterable, NamedTuple, Optional
 
-import camelot
+import camelot  # type: ignore[import]
 import click
 import dateutil.parser
 import pandas
