@@ -21,11 +21,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install mypy pylint
+        pip install black mypy pylint
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint
       run: |
         pylint statements2csv
+        black --check .
     - name: Typecheck
       run: |
         mypy statements2csv
