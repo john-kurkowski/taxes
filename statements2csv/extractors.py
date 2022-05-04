@@ -17,11 +17,17 @@ def extract_applecard(
     _: int, dataframe: pandas.core.frame.DataFrame
 ) -> Optional[Extraction]:
     """TODO"""
-    is_match = dataframe[0][0].lower().strip() == "transactions"
-    if not is_match:
+
+    def is_match(cell):
+        return cell.lower().strip() == "transactions"
+
+    found_transactions_idx = next(
+        (idx for idx in dataframe.index if is_match(dataframe.iat[idx, 0])), None
+    )
+    if found_transactions_idx is None:
         return None
 
-    return Extraction(dataframe[1:])
+    return Extraction(dataframe[found_transactions_idx + 1 :])
 
 
 def extract_capitalone(
