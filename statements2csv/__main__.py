@@ -20,12 +20,14 @@ from .extract import extract_dataframes
 def main(files: Iterable[pathlib.Path]) -> None:
     """Convert FILES bank statement PDFs to CSV on stdout."""
     for fil in files:
-        extractions = list(extract_dataframes(fil))
-        if not extractions:
-            logging.warning('File "%s" had nothing to extract', fil)
-
+        extractions = extract_dataframes(fil)
+        is_empty = True
         for extraction in extractions:
+            is_empty = False
             click.echo(extraction.dataframe.to_csv())
+
+        if is_empty:
+            logging.warning('File "%s" had nothing to extract', fil)
 
 
 logging.basicConfig(level=os.environ.get("LOGLEVEL", "WARNING").upper())
