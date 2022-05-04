@@ -34,9 +34,14 @@ def extract_capitalone(
     year: int, dataframe: pandas.core.frame.DataFrame
 ) -> Optional[Extraction]:
     """TODO"""
+    if len(dataframe.columns) <= 4:
+        return None
+
     maybe_dates = [val.lower() for val in dataframe[0].values]
+    maybe_balances = [val.lower() for val in dataframe[dataframe.columns[-1]].values]
     try:
         date_header_idx = maybe_dates.index("date")
+        maybe_balances.index("balance")
     except ValueError:
         return None
 
