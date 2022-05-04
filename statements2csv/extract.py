@@ -23,7 +23,8 @@ def extract_dataframes(fil: pathlib.Path) -> Generator[Extraction, None, None]:
     ]
     if len(year_candidates) != 1:
         raise ValueError(
-            f"{len(year_candidates)} possible statement years found in filepath {resolved_fil}. Must be exactly 1."
+            f"{len(year_candidates)} possible statement years found in filepath"
+            f" {resolved_fil}. Must be exactly 1."
         )
     year = year_candidates[0]
 
