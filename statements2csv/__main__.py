@@ -20,7 +20,7 @@ from .extract import extract_dataframes
 def main(files: Iterable[pathlib.Path]) -> None:
     """Convert FILES bank statement PDFs to CSV on stdout."""
     for fil in files:
-        extractions = list(extract_dataframes(str(fil)))
+        extractions = list(extract_dataframes(fil))
         if not extractions:
             logging.warning('File "%s" had nothing to extract', fil)
 
