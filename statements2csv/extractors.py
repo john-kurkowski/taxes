@@ -1,4 +1,7 @@
-"""TODO"""
+"""Functions to identify and extract transaction data from all supported banks'
+statements. Parses dates in the table to have the provided year, if the
+statement omits the year. If a function doesn't find data for its particular
+bank, it returns `None`."""
 
 import datetime
 from typing import NamedTuple, Optional
@@ -8,7 +11,7 @@ import pandas
 
 
 class Extraction(NamedTuple):
-    """TODO"""
+    """Tabular transaction data for one table from one bank's statement."""
 
     dataframe: pandas.core.frame.DataFrame
 
@@ -16,7 +19,8 @@ class Extraction(NamedTuple):
 def extract_applecard(
     _: int, dataframe: pandas.core.frame.DataFrame
 ) -> Optional[Extraction]:
-    """TODO"""
+    """Extract transactions from Apple Card statements. They have the word
+    "Transactions" somewhere in the first column."""
 
     def is_match(cell):
         return cell.lower().strip() == "transactions"
@@ -33,7 +37,10 @@ def extract_applecard(
 def extract_capitalone(
     year: int, dataframe: pandas.core.frame.DataFrame
 ) -> Optional[Extraction]:
-    """TODO"""
+    """Extract transactions from Capital One statements. They have the headers
+    "Date" and "Balance" somewhere in the first several columns. "Date" is
+    always in the first column. "Balance" is variable, in the last column."""
+
     if len(dataframe.columns) <= 4:
         return None
 
@@ -58,7 +65,9 @@ def extract_capitalone(
 def extract_chase(
     year: int, dataframe: pandas.core.frame.DataFrame
 ) -> Optional[Extraction]:
-    """TODO"""
+    """Extract transactions from Chase statements. They have 1 of a few words
+    in the first cell of the table."""
+
     first_cell_sentinels = ("account activity", "date of", "transaction")
     first_cell = dataframe[0][0].lower().strip()
     is_match = any(first_cell.startswith(sentinel) for sentinel in first_cell_sentinels)

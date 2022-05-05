@@ -13,7 +13,10 @@ YEAR_RE = re.compile(r"^\d{4}$")
 
 
 def extract_dataframes(fil: pathlib.Path) -> Generator[Extraction, None, None]:
-    """TODO"""
+    """Parses the given PDF's tables for bank transactions, lazily yielding one
+    table at a time. Excludes non-transaction tables. For each table, tries all
+    supported banks in a consistent order. The first bank that yields a result
+    yields from this function. If no banks match, the table is skipped."""
 
     resolved_fil = fil.resolve()
     year_candidates = [

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-"""TODO"""
+"""CLI for this package."""
 
 
 import logging
