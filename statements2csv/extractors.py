@@ -1,10 +1,12 @@
 """Functions to identify and extract transaction data from all supported banks'
-statements. Parses dates in the table to have the provided year, if the
-statement omits the year. If a function doesn't find data for its particular
-bank, it returns `None`."""
+statements. Determines the bank and data from 1 table at a time (it does not,
+for example, consider 1 table in relation to the n other tables in the same
+PDF). Parses dates in the table to have the provided year, if the statement
+omits the year. If a function doesn't find data matching its particular bank,
+it returns `None`."""
 
 import datetime
-from typing import NamedTuple, Optional
+from typing import Callable, NamedTuple, Optional, Sequence
 
 import dateutil.parser
 import pandas
@@ -16,8 +18,11 @@ class Extraction(NamedTuple):
     dataframe: pandas.core.frame.DataFrame
 
 
+Extractor = Callable[[int, pandas.core.frame.DataFrame], Optional[Extraction]]
+
+
 def extract_applecard(
-    _: int, dataframe: pandas.core.frame.DataFrame
+    _year: int, dataframe: pandas.core.frame.DataFrame
 ) -> Optional[Extraction]:
     """Extract transactions from Apple Card statements. They have the word
     "Transactions" somewhere in the first column."""
@@ -88,4 +93,8 @@ def extract_chase(
     return Extraction(dataframe[2:])
 
 
-ALL_EXTRACTORS = (extract_applecard, extract_capitalone, extract_chase)
+ALL_EXTRACTORS: Sequence[Extractor] = (
+    extract_applecard,
+    extract_capitalone,
+    extract_chase,
+)
