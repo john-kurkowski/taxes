@@ -1,9 +1,9 @@
 """Functions to identify and extract transaction data from all supported banks'
-statements. Determines the bank and data from 1 table at a time (it does not,
-for example, consider 1 table in relation to the n other tables in the same
-PDF). Parses dates in the table to have the provided year, if the statement
-omits the year. If a function doesn't find data matching its particular bank,
-it returns `None`."""
+statements. Skips non-transaction data, like headers. Determines the bank and
+data from 1 table at a time (it does not, for example, consider 1 table in
+relation to the n other tables in the same PDF). Parses dates in the table to
+have the provided year, if the statement omits the year. If a function doesn't
+find data matching its particular bank, it returns `None`."""
 
 import datetime
 from typing import Callable, NamedTuple, Optional, Sequence
@@ -27,11 +27,11 @@ def extract_applecard(
     """Extract transactions from Apple Card statements. They have the word
     "Transactions" somewhere in the first column."""
 
-    def is_match(cell):
-        return cell.lower().strip() == "transactions"
+    def is_match(cell_text):
+        return cell_text.lower().strip() == "transactions"
 
     found_transactions_idx = next(
-        (idx for idx in dataframe.index if is_match(dataframe.iat[idx, 0])), None
+        (row_i for row_i in dataframe.index if is_match(dataframe.iat[row_i, 0])), None
     )
     if found_transactions_idx is None:
         return None
@@ -57,12 +57,14 @@ def extract_capitalone(
     except ValueError:
         return None
 
+    date_col_i = 0
     for row_i in dataframe[date_header_idx + 1 :].index:
-        cell = dataframe.iat[row_i, 0]
-        if not cell:
+        cell_text = dataframe.iat[row_i, date_col_i]
+        if not cell_text:
+            # This column is sometimes blank. Otherwise it will contain a date.
             continue
-        date = dateutil.parser.parse(cell).replace(year=year).date()
-        dataframe.iat[row_i, 0] = date
+        date = dateutil.parser.parse(cell_text).replace(year=year).date()
+        dataframe.iat[row_i, date_col_i] = date
 
     return Extraction(dataframe[date_header_idx + 1 :])
 
@@ -79,18 +81,20 @@ def extract_chase(
     if not is_match:
         return None
 
-    def try_date(cell) -> Optional[datetime.date]:
-        try:
-            return dateutil.parser.parse(cell).replace(year=year).date()
-        except ValueError:
-            return None
-
+    date_col_i = 0
     for row_i in dataframe.index:
-        date = try_date(dataframe.iat[row_i, 0])
-        if date:
-            dataframe.iat[row_i, 0] = date
+        try:
+            dataframe.iat[row_i, date_col_i] = (
+                dateutil.parser.parse(dataframe.iat[row_i, date_col_i])
+                .replace(year=year)
+                .date()
+            )
+        except ValueError:
+            # This column doesn't always have a date.
+            continue
 
-    return Extraction(dataframe[2:])
+    data_starts_at_idx = 2
+    return Extraction(dataframe[data_starts_at_idx:])
 
 
 ALL_EXTRACTORS: Sequence[Extractor] = (
