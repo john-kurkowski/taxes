@@ -5,7 +5,6 @@ relation to the n other tables in the same PDF). Parses dates in the table to
 have the provided year, if the statement omits the year. If a function doesn't
 find data matching its particular bank, it returns `None`."""
 
-import datetime
 from typing import Callable, NamedTuple, Optional, Sequence
 
 import dateutil.parser
