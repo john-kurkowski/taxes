@@ -2,4 +2,5 @@ camelot-py[all]
 click
 pandas
 pandas-stubs
+pre-commit
 types-python-dateutil
