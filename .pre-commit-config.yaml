@@ -7,7 +7,7 @@ repos:
     rev: v0.950
     hooks:
     -   id: mypy
-        # TODO: how to dedupe with requirements.txt? https://stackoverflow.com/a/65940386/62269
+        # TODO: how to dedupe with requirements.txt? pre-commit's author says it's impossible https://stackoverflow.com/a/65940386/62269
         additional_dependencies:
             - camelot-py[all]
             - click
@@ -18,7 +18,7 @@ repos:
     rev: v2.13.8
     hooks:
     -   id: pylint
-        # TODO: how to dedupe with requirements.txt? https://stackoverflow.com/a/65940386/62269
+        # TODO: how to dedupe with requirements.txt? pre-commit's author says it's impossible https://stackoverflow.com/a/65940386/62269
         additional_dependencies:
             - camelot-py[all]
             - click
