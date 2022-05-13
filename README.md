@@ -34,10 +34,9 @@ commands. I can copy and paste to my spreadsheet software.
 ## Contribute
 
 1. Follow the install steps above.
-1. Install the pre-commit hook.
+1. Install the [pre-commit](https://pre-commit.com/) hook.
 
    ```sh
-   pip install pre-commit
    pre-commit install
    ```
 
