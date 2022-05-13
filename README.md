@@ -23,8 +23,28 @@ Run `python -m statements2csv --help` for more details. You can get a little
 more debugging info by reducing the env var `LOGLEVEL`, which defaults to
 `WARNING`.
 
+### Motivation
+
 My banks' official transaction search UIs suck. Mint stopped aggregating all my
 bank transactions; its search was slow, besides. I save all my digital
 statements anyway, for tax purposes. I figured, I can use fast grep on the
 locally synced PDFs, instead of the official UIs. I can pipe to other Unix
 commands. I can copy and paste to my spreadsheet software.
+
+## Contribute
+
+1. Follow the install steps above.
+1. Install the [pre-commit](https://pre-commit.com/) hook.
+
+   ```sh
+   pre-commit install
+   ```
+
+### Tests
+
+Checks are run on commit, after installing the pre-commit hook above, and on
+push. You can also run them manually.
+
+```sh
+pre-commit run --all-files
+```
