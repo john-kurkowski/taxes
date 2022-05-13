@@ -24,15 +24,17 @@ def extract_applecard(
     _year: int, dataframe: pandas.core.frame.DataFrame
 ) -> Optional[Extraction]:
     """Extract transactions from Apple Card statements. They have the word
-    "Transactions" somewhere in the first column."""
+    "Transactions" somewhere in the first column. No date parsing is necessary,
+    because the statements already include the year."""
 
     def is_match(cell_text):
         return cell_text.lower().strip() == "transactions"
 
-    found_transactions_idx = next(
-        (row_i for row_i in dataframe.index if is_match(dataframe.iat[row_i, 0])), None
-    )
-    if found_transactions_idx is None:
+    try:
+        found_transactions_idx = next(
+            (row_i for row_i in dataframe.index if is_match(dataframe.iat[row_i, 0]))
+        )
+    except StopIteration:
         return None
 
     return Extraction(dataframe[found_transactions_idx + 1 :])
@@ -58,11 +60,10 @@ def extract_capitalone(
 
     date_col_i = 0
     for row_i in dataframe[date_header_idx + 1 :].index:
-        cell_text = dataframe.iat[row_i, date_col_i]
-        if not cell_text:
-            # This column is sometimes blank. Otherwise it will contain a date.
+        blank_or_date_cell_text = dataframe.iat[row_i, date_col_i]
+        if not blank_or_date_cell_text:
             continue
-        date = dateutil.parser.parse(cell_text).replace(year=year).date()
+        date = dateutil.parser.parse(blank_or_date_cell_text).replace(year=year).date()
         dataframe.iat[row_i, date_col_i] = date
 
     return Extraction(dataframe[date_header_idx + 1 :])
@@ -82,15 +83,13 @@ def extract_chase(
 
     date_col_i = 0
     for row_i in dataframe.index:
+        sometimes_date = dataframe.iat[row_i, date_col_i]
         try:
-            dataframe.iat[row_i, date_col_i] = (
-                dateutil.parser.parse(dataframe.iat[row_i, date_col_i])
-                .replace(year=year)
-                .date()
-            )
+            date = dateutil.parser.parse(sometimes_date)
         except ValueError:
-            # This column doesn't always have a date.
             continue
+        else:
+            dataframe.iat[row_i, date_col_i] = date.replace(year=year).date()
 
     data_starts_at_idx = 2
     return Extraction(dataframe[data_starts_at_idx:])

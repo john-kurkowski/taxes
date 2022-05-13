@@ -1,4 +1,4 @@
-"""TODO"""
+"""Functions for parsing a PDF bank statement."""
 
 import logging
 import pathlib
