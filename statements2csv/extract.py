@@ -18,18 +18,7 @@ def extract_dataframes(fil: pathlib.Path) -> Generator[Extraction, None, None]:
     supported banks in a consistent order. The first bank that yields a result
     yields from this function. If no banks match, the table is skipped."""
 
-    resolved_fil = fil.resolve()
-    year_candidates = [
-        int(match.group(0))
-        for part in resolved_fil.parts
-        if (match := YEAR_RE.match(part))
-    ]
-    if len(year_candidates) != 1:
-        raise ValueError(
-            f"{len(year_candidates)} possible statement years found in filepath"
-            f" {resolved_fil}. Must be exactly 1."
-        )
-    year = year_candidates[0]
+    year = _parse_year_from_absolute_filepath(fil.resolve())
 
     tables = camelot.read_pdf(str(fil), pages="all", flavor="stream")
     last_extraction = None
@@ -53,3 +42,16 @@ def extract_dataframes(fil: pathlib.Path) -> Generator[Extraction, None, None]:
         last_extraction = extraction
         logging.info('Extractor "%s" found something', extractor)
         yield extraction
+
+
+def _parse_year_from_absolute_filepath(fil: pathlib.Path) -> int:
+    year_candidates = [
+        int(match.group(0)) for part in fil.parts if (match := YEAR_RE.match(part))
+    ]
+
+    if len(year_candidates) != 1:
+        raise ValueError(
+            f"{len(year_candidates)} possible statement years found in filepath"
+            f" {fil}. Must be exactly 1."
+        )
+    return year_candidates[0]
