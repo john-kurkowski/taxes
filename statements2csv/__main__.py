@@ -24,7 +24,7 @@ def main(files: Iterable[pathlib.Path]) -> None:
         is_empty = True
         for extraction in extractions:
             is_empty = False
-            click.echo(extraction.dataframe.to_csv())
+            click.echo(extraction.dataframe.to_csv(index=False))
 
         if is_empty:
             logging.warning('File "%s" had nothing to extract', fil)
