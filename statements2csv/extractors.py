@@ -40,6 +40,54 @@ def extract_applecard(
     return Extraction(dataframe[found_transactions_idx + 1 :])
 
 
+def extract_bankofamerica(
+    year: int, dataframe: pandas.core.frame.DataFrame
+) -> Optional[Extraction]:
+    """Extract transactions from Bank of America statements. They have 2 date
+    columns, for transaction date and posting date. Drop the extra date. Some
+    transactions span multiple rows with metadata, like flight arrival time.
+    Drop these extra rows."""
+
+    def is_match(row_i: int) -> bool:
+        try:
+            return dataframe.iat[row_i, 0] == dataframe.iat[row_i, 1] == "Date"
+        except IndexError:
+            return False
+
+    try:
+        found_transactions_idx = next(
+            row_i for row_i in dataframe.index if is_match(row_i)
+        )
+    except StopIteration:
+        return None
+
+    date_col_i = 0
+    unwanted_rows = []
+    for row_i in dataframe.index:
+        if row_i < found_transactions_idx + 1:
+            unwanted_rows.append(row_i)
+            continue
+
+        try:
+            blank_or_date_cell_text = dataframe.iat[row_i, date_col_i]
+        except IndexError:
+            blank_or_date_cell_text = ""
+
+        if not blank_or_date_cell_text:
+            unwanted_rows.append(row_i)
+            continue
+
+        date = dateutil.parser.parse(blank_or_date_cell_text).replace(year=year).date()
+        dataframe.iat[row_i, date_col_i] = date
+
+    dataframe.drop(index=unwanted_rows, inplace=True)
+
+    posting_date_col_i = 1
+    dataframe.drop(columns=[posting_date_col_i], inplace=True)
+
+    return Extraction(dataframe)
+
+
 def extract_capitalone(
     year: int, dataframe: pandas.core.frame.DataFrame
 ) -> Optional[Extraction]:
@@ -97,6 +145,7 @@ def extract_chase(
 
 ALL_EXTRACTORS: Sequence[Extractor] = (
     extract_applecard,
+    extract_bankofamerica,
     extract_capitalone,
     extract_chase,
 )
