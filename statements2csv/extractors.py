@@ -82,8 +82,18 @@ def extract_bankofamerica(
 
     dataframe.drop(index=unwanted_rows, inplace=True)
 
-    posting_date_col_i = 1
-    dataframe.drop(columns=[posting_date_col_i], inplace=True)
+    column_names = {
+        0: "Date",
+        2: "Description",
+        3: "Ref #",
+        5: "Amount",
+    }
+
+    dataframe.drop(
+        columns=[col for col in dataframe.columns if col not in column_names],
+        inplace=True,
+    )
+    dataframe.rename(columns=column_names, inplace=True)
 
     return Extraction(dataframe)
 
