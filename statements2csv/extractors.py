@@ -7,6 +7,7 @@ find data matching its particular bank, it returns `None`."""
 
 from typing import Callable, NamedTuple, Optional, Sequence
 
+import datetime
 import dateutil.parser
 import pandas
 
@@ -77,7 +78,7 @@ def extract_bankofamerica(
             unwanted_rows.append(row_i)
             continue
 
-        date = dateutil.parser.parse(blank_or_date_cell_text).replace(year=year).date()
+        date = _date_parse(year, blank_or_date_cell_text)
         dataframe.iat[row_i, date_col_i] = date
 
     dataframe.drop(index=unwanted_rows, inplace=True)
@@ -121,7 +122,7 @@ def extract_capitalone(
         blank_or_date_cell_text = dataframe.iat[row_i, date_col_i]
         if not blank_or_date_cell_text:
             continue
-        date = dateutil.parser.parse(blank_or_date_cell_text).replace(year=year).date()
+        date = _date_parse(year, blank_or_date_cell_text)
         dataframe.iat[row_i, date_col_i] = date
 
     return Extraction(dataframe[date_header_idx + 1 :])
@@ -143,11 +144,11 @@ def extract_chase(
     for row_i in dataframe.index:
         sometimes_date = dataframe.iat[row_i, date_col_i]
         try:
-            date = dateutil.parser.parse(sometimes_date)
+            date = _date_parse(year, sometimes_date)
         except ValueError:
             continue
         else:
-            dataframe.iat[row_i, date_col_i] = date.replace(year=year).date()
+            dataframe.iat[row_i, date_col_i] = date
 
     data_starts_at_idx = 2
     return Extraction(dataframe[data_starts_at_idx:])
@@ -159,3 +160,21 @@ ALL_EXTRACTORS: Sequence[Extractor] = (
     extract_capitalone,
     extract_chase,
 )
+
+
+def _date_parse(year: int, text: str) -> datetime.date:
+    """Convert a transaction date string to a date object, with the given,
+    explicit year. Explicitly setting the year is necessary, because the
+    parsing assumes the current year if the year is omitted in the string. This
+    application usually handles historical dates from years past."""
+
+    try:
+        parsed = dateutil.parser.parse(text)
+    except dateutil.parser.ParserError as perr:
+        is_date_but_retry_with_explicit_year = "day is out of range" in repr(perr)
+        if is_date_but_retry_with_explicit_year:
+            parsed = dateutil.parser.parse(f"{year}/{text}")
+        else:
+            raise
+
+    return parsed.replace(year=year).date()
