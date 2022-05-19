@@ -32,9 +32,7 @@ def extract_applecard(
         return cell_text.lower().strip() == "transactions"
 
     try:
-        found_transactions_idx = next(
-            (row_i for row_i in dataframe.index if is_match(dataframe.iat[row_i, 0]))
-        )
+        next((row_i for row_i in dataframe.index if is_match(dataframe.iat[row_i, 0])))
     except StopIteration:
         return None
 
@@ -57,10 +55,7 @@ def extract_applecard(
         inplace=True,
     )
 
-    num_non_data_rows_after_found = 1
-    return Extraction(
-        dataframe[found_transactions_idx + num_non_data_rows_after_found + 1 :]
-    )
+    return Extraction(dataframe)
 
 
 def extract_bankofamerica(
@@ -204,8 +199,7 @@ def extract_chase(
     }
     dataframe.rename(columns=column_names, inplace=True)
 
-    data_starts_at_idx = 2
-    return Extraction(dataframe[data_starts_at_idx:])
+    return Extraction(dataframe)
 
 
 ALL_EXTRACTORS: Sequence[Extractor] = (
