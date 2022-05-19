@@ -55,7 +55,6 @@ def extract_applecard(
         | dataframe["Amount"].eq("")
         | dataframe["Amount"].str.isalpha()
     )
-
     dataframe.drop(
         index=dataframe.loc[is_empty_or_a_label].index,
         inplace=True,
@@ -79,32 +78,9 @@ def extract_bankofamerica(
             return False
 
     try:
-        found_transactions_idx = next(
-            row_i for row_i in dataframe.index if is_match(row_i)
-        )
+        next(row_i for row_i in dataframe.index if is_match(row_i))
     except StopIteration:
         return None
-
-    date_col_i = 0
-    unwanted_rows = []
-    for row_i in dataframe.index:
-        if row_i < found_transactions_idx + 1:
-            unwanted_rows.append(row_i)
-            continue
-
-        try:
-            blank_or_date_cell_text = dataframe.iat[row_i, date_col_i]
-        except IndexError:
-            blank_or_date_cell_text = ""
-
-        if not blank_or_date_cell_text:
-            unwanted_rows.append(row_i)
-            continue
-
-        date = _date_parse(year, blank_or_date_cell_text)
-        dataframe.iat[row_i, date_col_i] = date
-
-    dataframe.drop(index=unwanted_rows, inplace=True)
 
     column_names = {
         0: "Date",
@@ -118,6 +94,9 @@ def extract_bankofamerica(
         inplace=True,
     )
     dataframe.rename(columns=column_names, inplace=True)
+
+    dataframe["Date"] = [_maybe_date_parse(year, date) for date in dataframe["Date"]]
+    dataframe.drop(index=dataframe.loc[dataframe["Date"].isnull()].index, inplace=True)
 
     return Extraction(dataframe)
 
@@ -150,24 +129,15 @@ def extract_capitalone(
         amount_col_idx: "Amount",
     }
     dataframe.rename(columns=column_names, inplace=True)
-
-    unwanted_rows = []
-    for row_i in dataframe.index:
-        if row_i <= date_header_idx or not dataframe.loc[row_i, "Amount"]:
-            unwanted_rows.append(row_i)
-            continue
-
-        blank_or_date_cell_text = dataframe.loc[row_i, "Date"]
-        if not blank_or_date_cell_text:
-            continue
-        date = _date_parse(year, blank_or_date_cell_text)
-        dataframe.loc[row_i, "Date"] = date
-
-    dataframe.drop(index=unwanted_rows, inplace=True)
     dataframe.drop(
         columns=[col for col in dataframe.columns if col not in column_names.values()],
         inplace=True,
     )
+
+    dataframe["Date"] = [_maybe_date_parse(year, date) for date in dataframe["Date"]]
+
+    is_empty_date_or_amount = dataframe["Date"].isnull() | dataframe["Amount"].eq("")
+    dataframe.drop(index=dataframe.loc[is_empty_date_or_amount].index, inplace=True)
 
     return Extraction(dataframe)
 
@@ -184,26 +154,15 @@ def extract_chase(
     if not is_match:
         return None
 
-    date_col_i = 0
-    unwanted_rows = []
-    for row_i in dataframe.index:
-        sometimes_date = dataframe.iat[row_i, date_col_i]
-        try:
-            date = _date_parse(year, sometimes_date)
-        except ValueError:
-            unwanted_rows.append(row_i)
-            continue
-        else:
-            dataframe.iat[row_i, date_col_i] = date
-
-    dataframe.drop(index=unwanted_rows, inplace=True)
-
     column_names = {
         0: "Date",
         1: "Description",
         2: "Amount",
     }
     dataframe.rename(columns=column_names, inplace=True)
+
+    dataframe["Date"] = [_maybe_date_parse(year, date) for date in dataframe["Date"]]
+    dataframe.drop(index=dataframe.loc[dataframe["Date"].isnull()].index, inplace=True)
 
     return Extraction(dataframe)
 
@@ -232,3 +191,13 @@ def _date_parse(year: int, text: str) -> datetime.date:
             raise
 
     return parsed.replace(year=year).date()
+
+
+def _maybe_date_parse(year: int, text: str) -> Optional[datetime.date]:
+    """Same as _date_parse, but ignores non-date strings by catching a date
+    parse error, and returning `None`."""
+
+    try:
+        return _date_parse(year, text)
+    except dateutil.parser.ParserError:
+        return None
