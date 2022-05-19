@@ -48,10 +48,15 @@ def extract_applecard(
     )
     dataframe.rename(columns=column_names, inplace=True)
 
+    is_empty_or_a_label = (
+        dataframe["Date"].eq("")
+        | dataframe["Date"].str.isalpha()
+        | dataframe["Amount"].eq("")
+        | dataframe["Amount"].str.isalpha()
+    )
+
     dataframe.drop(
-        index=dataframe.loc[
-            dataframe["Date"].eq("") | dataframe["Amount"].eq("")
-        ].index,
+        index=dataframe.loc[is_empty_or_a_label].index,
         inplace=True,
     )
 
