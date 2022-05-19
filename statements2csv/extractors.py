@@ -24,15 +24,16 @@ Extractor = Callable[[int, pandas.core.frame.DataFrame], Optional[Extraction]]
 def extract_applecard(
     _year: int, dataframe: pandas.core.frame.DataFrame
 ) -> Optional[Extraction]:
-    """Extract transactions from Apple Card statements. They have the word
-    "Transactions" somewhere in the first column. No date parsing is necessary,
-    because the statements already include the year."""
+    """Extract transactions from Apple Card statements. They have a "Daily
+    Cash" column. No date parsing is necessary, because the statements already
+    include the year."""
 
-    def is_match(cell_text):
-        return cell_text.lower().strip() == "transactions"
+    def is_match(row: pandas.core.series.Series) -> bool:
+        row_texts = set(cell_text.lower().strip() for cell_text in row)
+        return "date" in row_texts and "daily cash" in row_texts
 
     try:
-        next((row_i for row_i in dataframe.index if is_match(dataframe.iat[row_i, 0])))
+        next((row_i for row_i in dataframe.index if is_match(dataframe.iloc[row_i])))
     except StopIteration:
         return None
 
