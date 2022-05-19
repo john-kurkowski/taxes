@@ -38,7 +38,29 @@ def extract_applecard(
     except StopIteration:
         return None
 
-    return Extraction(dataframe[found_transactions_idx + 1 :])
+    column_names = {
+        0: "Date",
+        1: "Description",
+        4: "Amount",
+    }
+
+    dataframe.drop(
+        columns=[col for col in dataframe.columns if col not in column_names],
+        inplace=True,
+    )
+    dataframe.rename(columns=column_names, inplace=True)
+
+    dataframe.drop(
+        index=dataframe.loc[
+            dataframe["Date"].eq("") | dataframe["Amount"].eq("")
+        ].index,
+        inplace=True,
+    )
+
+    num_non_data_rows_after_found = 1
+    return Extraction(
+        dataframe[found_transactions_idx + num_non_data_rows_after_found + 1 :]
+    )
 
 
 def extract_bankofamerica(
@@ -104,7 +126,8 @@ def extract_capitalone(
 ) -> Optional[Extraction]:
     """Extract transactions from Capital One statements. They have the headers
     "Date" and "Balance" somewhere in the first several columns. "Date" is
-    always in the first column. "Balance" is variable, in the last column."""
+    always in the first column. "Amount" and "Balance" are variable, in the
+    last 2 columns."""
 
     if len(dataframe.columns) <= 4:
         return None
@@ -117,15 +140,35 @@ def extract_capitalone(
     except ValueError:
         return None
 
-    date_col_i = 0
-    for row_i in dataframe[date_header_idx + 1 :].index:
-        blank_or_date_cell_text = dataframe.iat[row_i, date_col_i]
+    amount_col_idx = (
+        dataframe.loc[date_header_idx].loc[lambda x: x == "AMOUNT"].index[0]
+    )
+    column_names = {
+        0: "Date",
+        1: "Description",
+        amount_col_idx: "Amount",
+    }
+    dataframe.rename(columns=column_names, inplace=True)
+
+    unwanted_rows = []
+    for row_i in dataframe.index:
+        if row_i <= date_header_idx or not dataframe.loc[row_i, "Amount"]:
+            unwanted_rows.append(row_i)
+            continue
+
+        blank_or_date_cell_text = dataframe.loc[row_i, "Date"]
         if not blank_or_date_cell_text:
             continue
         date = _date_parse(year, blank_or_date_cell_text)
-        dataframe.iat[row_i, date_col_i] = date
+        dataframe.loc[row_i, "Date"] = date
 
-    return Extraction(dataframe[date_header_idx + 1 :])
+    dataframe.drop(index=unwanted_rows, inplace=True)
+    dataframe.drop(
+        columns=[col for col in dataframe.columns if col not in column_names.values()],
+        inplace=True,
+    )
+
+    return Extraction(dataframe)
 
 
 def extract_chase(
@@ -141,14 +184,25 @@ def extract_chase(
         return None
 
     date_col_i = 0
+    unwanted_rows = []
     for row_i in dataframe.index:
         sometimes_date = dataframe.iat[row_i, date_col_i]
         try:
             date = _date_parse(year, sometimes_date)
         except ValueError:
+            unwanted_rows.append(row_i)
             continue
         else:
             dataframe.iat[row_i, date_col_i] = date
+
+    dataframe.drop(index=unwanted_rows, inplace=True)
+
+    column_names = {
+        0: "Date",
+        1: "Description",
+        2: "Amount",
+    }
+    dataframe.rename(columns=column_names, inplace=True)
 
     data_starts_at_idx = 2
     return Extraction(dataframe[data_starts_at_idx:])
