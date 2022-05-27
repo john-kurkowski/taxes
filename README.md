@@ -3,7 +3,7 @@
 ## Install
 
 ```zsh
-pip install -r requirements.txt
+pip install .
 ```
 
 ## statements2csv
@@ -12,14 +12,14 @@ This script converts bank statement PDFs from the banks I use, listed as
 arguments, to plain text CSV on stdout. Example usage:
 
 ```zsh
-$ python -m statements2csv input1.pdf input2.pdf
+$ statements2csv input1.pdf input2.pdf
 ,0,1,2,3,4
 1,Date,Description,Daily Cash,,Amount
 4,08/31/2021,Output Inc. 1418 N Spring St Los Angeles 90012 CA USA,1%,$0.10,$10.00
 …
 ```
 
-Run `python -m statements2csv --help` for more details. You can get a little
+Run `statements2csv --help` for more details. You can get a little
 more debugging info by reducing the env var `LOGLEVEL`, which defaults to
 `WARNING`.
 
@@ -33,10 +33,11 @@ commands. I can copy and paste to my spreadsheet software.
 
 ## Contribute
 
-1. Follow the install steps above.
-1. Install the [pre-commit](https://pre-commit.com/) hook.
+1. Install for local development:
 
    ```sh
+   pip install --editable .
+   pip install --editable '.[testing]'
    pre-commit install
    ```
 
