@@ -42,9 +42,9 @@ class Extractor(Protocol):
         )
         dataframe.rename(columns=column_names, inplace=True)
 
-        dataframe["Date"] = [
-            _maybe_date_parse(year, date) for date in dataframe["Date"]
-        ]
+        dataframe["Date"] = pandas.to_datetime(
+            [_maybe_date_parse(year, date) for date in dataframe["Date"]]
+        )
 
         dataframe.drop(
             index=dataframe.loc[self.unwanted_rows_indexer(dataframe)].index,
@@ -105,8 +105,7 @@ class ExtractorAppleCard(Extractor):
         self, dataframe: pandas.core.frame.DataFrame
     ) -> pandas.Series:
         is_empty_or_a_label = (
-            dataframe["Date"].eq("")
-            | dataframe["Date"].str.isalpha()
+            dataframe["Date"].isnull()
             | dataframe["Amount"].eq("")
             | dataframe["Amount"].str.isalpha()
         )
