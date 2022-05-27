@@ -1,13 +1,10 @@
-"""Functions to identify and extract transaction data from all supported banks'
-statements. Skips non-transaction data, like headers. Determines the bank and
-data from 1 table at a time (it does not, for example, consider 1 table in
-relation to the n other tables in the same PDF). Parses dates in the table to
-have the provided year, if the statement omits the year. If a function doesn't
-find data matching its particular bank, it returns `None`."""
-
-from typing import Callable, NamedTuple, Optional, Sequence
+"""Callables to identify and extract transaction data from supported banks'
+statements."""
 
 import datetime
+from abc import abstractmethod
+from typing import NamedTuple, Optional, Protocol, Sequence
+
 import dateutil.parser
 import pandas
 
@@ -18,160 +15,206 @@ class Extraction(NamedTuple):
     dataframe: pandas.core.frame.DataFrame
 
 
-Extractor = Callable[[int, pandas.core.frame.DataFrame], Optional[Extraction]]
+class Extractor(Protocol):
+    """Callable to identify and extract transaction data from 1 table from 1
+    particular bank's statement. Skip non-transaction data, like headers.
+    Determine the bank and data from 1 table at a time (this module does not,
+    for example, consider 1 table in relation to the n other tables in the same
+    PDF). Parse dates in the table to have the provided year, if the statement
+    omits the year. If no data is found matching the particular bank, return
+    `None`."""
+
+    def __call__(
+        self, year: int, dataframe: pandas.core.frame.DataFrame
+    ) -> Optional[Extraction]:
+        if not self.is_match(dataframe):
+            return None
+
+        return self._extract(year, dataframe)
+
+    def _extract(self, year: int, dataframe: pandas.core.frame.DataFrame) -> Extraction:
+        """The core transaction table extraction steps, shared by all banks."""
+        column_names = self.column_names(dataframe)
+
+        dataframe.drop(
+            columns=[col for col in dataframe.columns if col not in column_names],
+            inplace=True,
+        )
+        dataframe.rename(columns=column_names, inplace=True)
+
+        dataframe["Date"] = [
+            _maybe_date_parse(year, date) for date in dataframe["Date"]
+        ]
+
+        dataframe.drop(
+            index=dataframe.loc[self.unwanted_rows_indexer(dataframe)].index,
+            inplace=True,
+        )
+
+        return Extraction(dataframe)
+
+    @abstractmethod
+    def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
+        """Whether this Extractor can handle the 1 table for its particular bank."""
+
+    @abstractmethod
+    def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
+        """Map column integer indexes to human-friendly display names. There
+        are at least the same 3 columns in every bank transaction PDF: Date,
+        Description, and Amount."""
+
+    @abstractmethod
+    def unwanted_rows_indexer(
+        self, dataframe: pandas.core.frame.DataFrame
+    ) -> pandas.Series:
+        """Select dataframe rows to be dropped, after parsing is complete,
+        before data is returned to the caller. For example, select rows because
+        they don't contain a valid date or transaction dollar amount."""
 
 
-def extract_applecard(
-    _year: int, dataframe: pandas.core.frame.DataFrame
-) -> Optional[Extraction]:
+class ExtractorAppleCard(Extractor):
     """Extract transactions from Apple Card statements. They have a "Daily
-    Cash" column. No date parsing is necessary, because the statements already
-    include the year."""
+    Cash" column. Date parsing is not technically necessary, because the
+    statements already include the year."""
 
-    def is_match(row: pandas.core.series.Series) -> bool:
-        row_texts = set(cell_text.lower().strip() for cell_text in row)
-        return "date" in row_texts and "daily cash" in row_texts
+    def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
+        def is_row_match(row: pandas.core.series.Series) -> bool:
+            row_texts = set(cell_text.lower().strip() for cell_text in row)
+            return "date" in row_texts and "daily cash" in row_texts
 
-    try:
-        next((row_i for row_i in dataframe.index if is_match(dataframe.iloc[row_i])))
-    except StopIteration:
-        return None
+        try:
+            next(
+                (
+                    row_i
+                    for row_i in dataframe.index
+                    if is_row_match(dataframe.iloc[row_i])
+                )
+            )
+            return True
+        except StopIteration:
+            return False
 
-    column_names = {
-        0: "Date",
-        1: "Description",
-        4: "Amount",
-    }
+    def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
+        return {
+            0: "Date",
+            1: "Description",
+            4: "Amount",
+        }
 
-    dataframe.drop(
-        columns=[col for col in dataframe.columns if col not in column_names],
-        inplace=True,
-    )
-    dataframe.rename(columns=column_names, inplace=True)
+    def unwanted_rows_indexer(
+        self, dataframe: pandas.core.frame.DataFrame
+    ) -> pandas.Series:
+        is_empty_or_a_label = (
+            dataframe["Date"].eq("")
+            | dataframe["Date"].str.isalpha()
+            | dataframe["Amount"].eq("")
+            | dataframe["Amount"].str.isalpha()
+        )
 
-    is_empty_or_a_label = (
-        dataframe["Date"].eq("")
-        | dataframe["Date"].str.isalpha()
-        | dataframe["Amount"].eq("")
-        | dataframe["Amount"].str.isalpha()
-    )
-    dataframe.drop(
-        index=dataframe.loc[is_empty_or_a_label].index,
-        inplace=True,
-    )
-
-    return Extraction(dataframe)
+        return is_empty_or_a_label
 
 
-def extract_bankofamerica(
-    year: int, dataframe: pandas.core.frame.DataFrame
-) -> Optional[Extraction]:
+class ExtractorBankOfAmerica(Extractor):
     """Extract transactions from Bank of America statements. They have 2 date
     columns, for transaction date and posting date. Drop the extra date. Some
     transactions span multiple rows with metadata, like flight arrival time.
     Drop these extra rows."""
 
-    def is_match(row_i: int) -> bool:
+    def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
+        def is_row_match(row_i: int) -> bool:
+            try:
+                return dataframe.iat[row_i, 0] == dataframe.iat[row_i, 1] == "Date"
+            except IndexError:
+                return False
+
         try:
-            return dataframe.iat[row_i, 0] == dataframe.iat[row_i, 1] == "Date"
-        except IndexError:
+            next(row_i for row_i in dataframe.index if is_row_match(row_i))
+            return True
+        except StopIteration:
             return False
 
-    try:
-        next(row_i for row_i in dataframe.index if is_match(row_i))
-    except StopIteration:
-        return None
+    def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
+        return {
+            0: "Date",
+            2: "Description",
+            3: "Ref #",
+            5: "Amount",
+        }
 
-    column_names = {
-        0: "Date",
-        2: "Description",
-        3: "Ref #",
-        5: "Amount",
-    }
-
-    dataframe.drop(
-        columns=[col for col in dataframe.columns if col not in column_names],
-        inplace=True,
-    )
-    dataframe.rename(columns=column_names, inplace=True)
-
-    dataframe["Date"] = [_maybe_date_parse(year, date) for date in dataframe["Date"]]
-    dataframe.drop(index=dataframe.loc[dataframe["Date"].isnull()].index, inplace=True)
-
-    return Extraction(dataframe)
+    def unwanted_rows_indexer(
+        self, dataframe: pandas.core.frame.DataFrame
+    ) -> pandas.Series:
+        return dataframe["Date"].isnull()
 
 
-def extract_capitalone(
-    year: int, dataframe: pandas.core.frame.DataFrame
-) -> Optional[Extraction]:
+class ExtractorCapitalOne(Extractor):
     """Extract transactions from Capital One statements. They have the headers
     "Date" and "Balance" somewhere in the first several columns. "Date" is
     always in the first column. "Amount" and "Balance" are variable, in the
     last 2 columns."""
 
-    if len(dataframe.columns) <= 4:
-        return None
+    def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
+        if len(dataframe.columns) <= 4:
+            return False
 
-    maybe_dates = [val.lower() for val in dataframe[0].values]
-    maybe_balances = [val.lower() for val in dataframe[dataframe.columns[-1]].values]
-    try:
-        date_header_idx = maybe_dates.index("date")
-        maybe_balances.index("balance")
-    except ValueError:
-        return None
+        maybe_dates = [val.lower() for val in dataframe[0].values]
+        maybe_balances = [
+            val.lower() for val in dataframe[dataframe.columns[-1]].values
+        ]
+        try:
+            maybe_dates.index("date")
+            maybe_balances.index("balance")
+            return True
+        except ValueError:
+            return False
 
-    amount_col_idx = (
-        dataframe.loc[date_header_idx].loc[lambda x: x == "AMOUNT"].index[0]
-    )
-    column_names = {
-        0: "Date",
-        1: "Description",
-        amount_col_idx: "Amount",
-    }
-    dataframe.rename(columns=column_names, inplace=True)
-    dataframe.drop(
-        columns=[col for col in dataframe.columns if col not in column_names.values()],
-        inplace=True,
-    )
+    def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
+        date_header_idx = [val.lower() for val in dataframe[0].values].index("date")
+        amount_col_idx = (
+            dataframe.loc[date_header_idx].loc[lambda x: x == "AMOUNT"].index[0]
+        )
+        return {
+            0: "Date",
+            1: "Description",
+            amount_col_idx: "Amount",
+        }
 
-    dataframe["Date"] = [_maybe_date_parse(year, date) for date in dataframe["Date"]]
-
-    is_empty_date_or_amount = dataframe["Date"].isnull() | dataframe["Amount"].eq("")
-    dataframe.drop(index=dataframe.loc[is_empty_date_or_amount].index, inplace=True)
-
-    return Extraction(dataframe)
+    def unwanted_rows_indexer(
+        self, dataframe: pandas.core.frame.DataFrame
+    ) -> pandas.Series:
+        is_empty_date_or_amount = dataframe["Date"].isnull() | dataframe["Amount"].eq(
+            ""
+        )
+        return is_empty_date_or_amount
 
 
-def extract_chase(
-    year: int, dataframe: pandas.core.frame.DataFrame
-) -> Optional[Extraction]:
+class ExtractorChase(Extractor):
     """Extract transactions from Chase statements. They have 1 of a few words
     in the first cell of the table."""
 
-    first_cell_sentinels = ("account activity", "date of", "transaction")
-    first_cell = dataframe[0][0].lower().strip()
-    is_match = any(first_cell.startswith(sentinel) for sentinel in first_cell_sentinels)
-    if not is_match:
-        return None
+    def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
+        first_cell_sentinels = ("account activity", "date of", "transaction")
+        first_cell = dataframe[0][0].lower().strip()
+        return any(first_cell.startswith(sentinel) for sentinel in first_cell_sentinels)
 
-    column_names = {
-        0: "Date",
-        1: "Description",
-        2: "Amount",
-    }
-    dataframe.rename(columns=column_names, inplace=True)
+    def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
+        return {
+            0: "Date",
+            1: "Description",
+            2: "Amount",
+        }
 
-    dataframe["Date"] = [_maybe_date_parse(year, date) for date in dataframe["Date"]]
-    dataframe.drop(index=dataframe.loc[dataframe["Date"].isnull()].index, inplace=True)
-
-    return Extraction(dataframe)
+    def unwanted_rows_indexer(
+        self, dataframe: pandas.core.frame.DataFrame
+    ) -> pandas.Series:
+        return dataframe["Date"].isnull()
 
 
 ALL_EXTRACTORS: Sequence[Extractor] = (
-    extract_applecard,
-    extract_bankofamerica,
-    extract_capitalone,
-    extract_chase,
+    ExtractorAppleCard(),
+    ExtractorBankOfAmerica(),
+    ExtractorCapitalOne(),
+    ExtractorChase(),
 )
 
 
