@@ -34,6 +34,7 @@ class Extractor(Protocol):
 
     def _extract(self, year: int, dataframe: pandas.core.frame.DataFrame) -> Extraction:
         """The core transaction table extraction steps, shared by all banks."""
+
         column_names = self.column_names(dataframe)
 
         dataframe.drop(
@@ -47,7 +48,7 @@ class Extractor(Protocol):
         )
 
         dataframe.drop(
-            index=dataframe.loc[self.unwanted_rows_indexer(dataframe)].index,
+            index=dataframe.loc[self.unwanted_rows(dataframe)].index,
             inplace=True,
         )
 
@@ -63,13 +64,18 @@ class Extractor(Protocol):
         are at least the same 3 columns in every bank transaction PDF: Date,
         Description, and Amount."""
 
-    @abstractmethod
-    def unwanted_rows_indexer(
-        self, dataframe: pandas.core.frame.DataFrame
-    ) -> pandas.Series:
+    def unwanted_rows(self, dataframe: pandas.core.frame.DataFrame) -> pandas.Series:
         """Select dataframe rows to be dropped, after parsing is complete,
-        before data is returned to the caller. For example, select rows because
-        they don't contain a valid date or transaction dollar amount."""
+        before data is returned to the caller. For example, select rows with
+        invalid dates."""
+
+        is_empty_or_a_label = (
+            dataframe["Date"].isnull()
+            | dataframe["Amount"].eq("")
+            | dataframe["Amount"].str.isalpha()
+        )
+
+        return is_empty_or_a_label
 
 
 class ExtractorAppleCard(Extractor):
@@ -90,17 +96,6 @@ class ExtractorAppleCard(Extractor):
             1: "Description",
             4: "Amount",
         }
-
-    def unwanted_rows_indexer(
-        self, dataframe: pandas.core.frame.DataFrame
-    ) -> pandas.Series:
-        is_empty_or_a_label = (
-            dataframe["Date"].isnull()
-            | dataframe["Amount"].eq("")
-            | dataframe["Amount"].str.isalpha()
-        )
-
-        return is_empty_or_a_label
 
 
 class ExtractorBankOfAmerica(Extractor):
@@ -125,11 +120,6 @@ class ExtractorBankOfAmerica(Extractor):
             3: "Ref #",
             5: "Amount",
         }
-
-    def unwanted_rows_indexer(
-        self, dataframe: pandas.core.frame.DataFrame
-    ) -> pandas.Series:
-        return dataframe["Date"].isnull()
 
 
 class ExtractorCapitalOne(Extractor):
@@ -159,14 +149,6 @@ class ExtractorCapitalOne(Extractor):
             amount_col_idx: "Amount",
         }
 
-    def unwanted_rows_indexer(
-        self, dataframe: pandas.core.frame.DataFrame
-    ) -> pandas.Series:
-        is_empty_date_or_amount = dataframe["Date"].isnull() | dataframe["Amount"].eq(
-            ""
-        )
-        return is_empty_date_or_amount
-
 
 class ExtractorChase(Extractor):
     """Extract transactions from Chase statements. They have 1 of a few words
@@ -183,11 +165,6 @@ class ExtractorChase(Extractor):
             1: "Description",
             2: "Amount",
         }
-
-    def unwanted_rows_indexer(
-        self, dataframe: pandas.core.frame.DataFrame
-    ) -> pandas.Series:
-        return dataframe["Date"].isnull()
 
 
 ALL_EXTRACTORS: Sequence[Extractor] = (
