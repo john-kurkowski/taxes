@@ -23,7 +23,8 @@ def main(files: Sequence[pathlib.Path]) -> None:
 
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "WARNING").upper())
 
-    if len(files) <= 1:
+    num_cores_that_hopefully_wont_max_out_machine = multiprocessing.cpu_count() // 2
+    if len(files) <= 1 or num_cores_that_hopefully_wont_max_out_machine <= 1:
         extract_file(files[0])
         return
 
@@ -32,9 +33,6 @@ def main(files: Sequence[pathlib.Path]) -> None:
     # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
     multiprocessing.set_start_method("fork")
 
-    num_cores_that_hopefully_wont_max_out_machine = max(
-        multiprocessing.cpu_count() // 2, 1
-    )
     with multiprocessing.Pool(num_cores_that_hopefully_wont_max_out_machine) as pool:
         pool.map(extract_file, files)
 
