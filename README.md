@@ -13,9 +13,8 @@ arguments, to plain text CSV on stdout. Example usage:
 
 ```zsh
 $ statements2csv input1.pdf input2.pdf
-,0,1,2,3,4
-1,Date,Description,Daily Cash,,Amount
-4,08/31/2021,Output Inc. 1418 N Spring St Los Angeles 90012 CA USA,1%,$0.10,$10.00
+Date,Description,Amount
+08/31/2021,Output Inc. 1418 N Spring St Los Angeles 90012 CA USA,$10.00
 …
 ```
 
@@ -33,7 +32,7 @@ commands. I can copy and paste to my spreadsheet software.
 
 ## Contribute
 
-1. Install for local development:
+Install for local development:
 
    ```sh
    pip install --editable .
