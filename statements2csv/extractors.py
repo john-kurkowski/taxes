@@ -82,17 +82,7 @@ class ExtractorAppleCard(Extractor):
             row_texts = set(cell_text.lower().strip() for cell_text in row)
             return "date" in row_texts and "daily cash" in row_texts
 
-        try:
-            next(
-                (
-                    row_i
-                    for row_i in dataframe.index
-                    if is_row_match(dataframe.iloc[row_i])
-                )
-            )
-            return True
-        except StopIteration:
-            return False
+        return any(is_row_match(dataframe.iloc[row_i]) for row_i in dataframe.index)
 
     def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
         return {
@@ -126,11 +116,7 @@ class ExtractorBankOfAmerica(Extractor):
             except IndexError:
                 return False
 
-        try:
-            next(row_i for row_i in dataframe.index if is_row_match(row_i))
-            return True
-        except StopIteration:
-            return False
+        return any(is_row_match(row_i) for row_i in dataframe.index)
 
     def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
         return {
@@ -160,12 +146,7 @@ class ExtractorCapitalOne(Extractor):
         maybe_balances = [
             val.lower() for val in dataframe[dataframe.columns[-1]].values
         ]
-        try:
-            maybe_dates.index("date")
-            maybe_balances.index("balance")
-            return True
-        except ValueError:
-            return False
+        return "date" in maybe_dates and "balance" in maybe_balances
 
     def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
         date_header_idx = [val.lower() for val in dataframe[0].values].index("date")
