@@ -117,7 +117,6 @@ class ExtractorBankOfAmerica(Extractor):
         return {
             0: "Date",
             2: "Description",
-            3: "Ref #",
             5: "Amount",
         }
 
