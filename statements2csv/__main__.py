@@ -14,7 +14,20 @@ from typing import Sequence
 
 import click
 
-from .cli import extract_file
+from .extract import extract_dataframes
+from .extractors import Extraction
+
+
+def extract_file(fil: pathlib.Path) -> list[Extraction]:
+    """Convert 1 bank statement PDF to a list of its tables that contain
+    transactions."""
+
+    result = sorted(
+        extract_dataframes(fil), key=lambda extraction: extraction.date_start
+    )
+    if not result:
+        logging.warning('File "%s" had nothing to extract', fil)
+    return result
 
 
 @click.command()
