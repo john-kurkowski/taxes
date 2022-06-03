@@ -4,6 +4,7 @@
 """CLI for this package."""
 
 
+import itertools
 import logging
 import multiprocessing
 import os
@@ -25,16 +26,25 @@ def main(files: Sequence[pathlib.Path]) -> None:
 
     num_cores_that_hopefully_wont_max_out_machine = multiprocessing.cpu_count() // 2
     if len(files) <= 1 or num_cores_that_hopefully_wont_max_out_machine <= 1:
-        extract_file(files[0])
-        return
+        sorted_extractions = extract_file(files[0])
+    else:
+        # Let through child process logging to stderr. Note on macOS, this line is
+        # considered unsafe.
+        # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
+        multiprocessing.set_start_method("fork")
 
-    # Let through child process logging to stderr. Note on macOS, this line is
-    # considered unsafe.
-    # https://docs.python.org/3/library/multiprocessing.html#contexts-and-start-methods
-    multiprocessing.set_start_method("fork")
+        with multiprocessing.Pool(
+            num_cores_that_hopefully_wont_max_out_machine
+        ) as pool:
+            extractions = pool.map(extract_file, files)
 
-    with multiprocessing.Pool(num_cores_that_hopefully_wont_max_out_machine) as pool:
-        pool.map(extract_file, files)
+        flattened_extractions = itertools.chain.from_iterable(extractions)
+        sorted_extractions = sorted(
+            flattened_extractions, key=lambda extraction: extraction.date_start
+        )
+
+    for extraction in sorted_extractions:
+        click.echo(extraction.dataframe.to_csv(index=False))
 
 
 if __name__ == "__main__":

@@ -3,18 +3,20 @@
 import logging
 import pathlib
 
-import click
-
 from .extract import extract_dataframes
+from .extractors import Extraction
 
 
-def extract_file(fil: pathlib.Path) -> None:
-    """Convert 1 bank statement PDF to CSV on stdout."""
-    extractions = extract_dataframes(fil)
-    is_empty = True
-    for extraction in extractions:
-        is_empty = False
-        click.echo(extraction.dataframe.to_csv(index=False))
+def extract_file(fil: pathlib.Path) -> list[Extraction]:
+    """Convert 1 bank statement PDF to a list of its tables that contain
+    transactions.
 
-    if is_empty:
+    This function lives in its own file, to work around a multiprocessing
+    pickling limitation."""
+
+    result = sorted(
+        extract_dataframes(fil), key=lambda extraction: extraction.date_start
+    )
+    if not result:
         logging.warning('File "%s" had nothing to extract', fil)
+    return result

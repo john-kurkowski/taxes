@@ -14,6 +14,11 @@ class Extraction(NamedTuple):
 
     dataframe: pandas.core.frame.DataFrame
 
+    @property
+    def date_start(self) -> datetime.date:
+        """The earliest date in the extracted table."""
+        return self.dataframe["Date"].min()
+
 
 class Extractor(Protocol):
     """Callable to identify and extract transaction data from 1 table from 1
