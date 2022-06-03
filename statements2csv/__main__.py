@@ -56,8 +56,12 @@ def main(files: Sequence[pathlib.Path]) -> None:
             flattened_extractions, key=lambda extraction: extraction.date_start
         )
 
-    for extraction in sorted_extractions:
-        click.echo(extraction.dataframe.to_csv(index=False))
+    for i, extraction in enumerate(sorted_extractions):
+        is_first = i == 0
+        is_last = i >= len(sorted_extractions) - 1
+        click.echo(
+            extraction.dataframe.to_csv(header=is_first, index=False), nl=is_last
+        )
 
 
 if __name__ == "__main__":
