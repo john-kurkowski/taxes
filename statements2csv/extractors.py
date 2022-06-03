@@ -133,14 +133,22 @@ class ExtractorCapitalOne(Extractor):
     last 2 columns."""
 
     def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
-        if len(dataframe.columns) <= 4:
+        try:
+            maybe_dates = [val.lower() for val in dataframe[0].values]
+            maybe_amounts = [
+                val.lower() for val in dataframe[dataframe.columns[-2]].values
+            ]
+            maybe_balances = [
+                val.lower() for val in dataframe[dataframe.columns[-1]].values
+            ]
+        except IndexError:
             return False
 
-        maybe_dates = [val.lower() for val in dataframe[0].values]
-        maybe_balances = [
-            val.lower() for val in dataframe[dataframe.columns[-1]].values
-        ]
-        return "date" in maybe_dates and "balance" in maybe_balances
+        return (
+            "date" in maybe_dates
+            and "amount" in maybe_amounts
+            and "balance" in maybe_balances
+        )
 
     def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
         date_header_idx = [val.lower() for val in dataframe[0].values].index("date")
@@ -159,7 +167,7 @@ class ExtractorChase(Extractor):
     in the first cell of the table."""
 
     def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
-        first_cell_sentinels = ("account activity", "date of", "transaction")
+        first_cell_sentinels = ("account activity", "date of")
         first_cell = dataframe[0][0].lower().strip()
         return any(first_cell.startswith(sentinel) for sentinel in first_cell_sentinels)
 
@@ -171,11 +179,37 @@ class ExtractorChase(Extractor):
         }
 
 
+class ExtractorWellsFargo(Extractor):
+    """Extract transactions from Wells Fargo statements. They have separate
+    columns for additions and subtractions."""
+
+    def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
+        try:
+            maybe_additions = [
+                val.lower() for val in dataframe[dataframe.columns[-3]].values
+            ]
+            maybe_subtractions = [
+                val.lower() for val in dataframe[dataframe.columns[-2]].values
+            ]
+        except IndexError:
+            return False
+
+        return "additions" in maybe_additions and "subtractions" in maybe_subtractions
+
+    def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
+        return {
+            0: "Date",
+            2: "Description",
+            4: "Amount",
+        }
+
+
 ALL_EXTRACTORS: Sequence[Extractor] = (
     ExtractorAppleCard(),
     ExtractorBankOfAmerica(),
     ExtractorCapitalOne(),
     ExtractorChase(),
+    ExtractorWellsFargo(),
 )
 
 
