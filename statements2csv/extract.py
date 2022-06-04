@@ -20,7 +20,18 @@ def extract_dataframes(fil: pathlib.Path) -> Generator[Extraction, None, None]:
 
     year = _parse_year_from_absolute_filepath(fil.resolve())
 
-    tables = camelot.read_pdf(str(fil), pages="all", flavor="stream")
+    try:
+        tables = camelot.read_pdf(str(fil), pages="all", flavor="stream")
+    except IndexError:
+        # Work around `IndexError: list index out of range` in
+        # "camelot/parsers/stream.py", line 386, in <listcomp>
+        #   if t.x0 > cols[-1][1] or t.x1 < cols[0][0]
+        #
+        # The uncaught error happens on 1 of my 121 Wells Fargo PDFs. For such
+        # an exceptional case, I don't think more aggressive error handling is
+        # warranted.
+        return
+
     last_extraction = None
     for table in tables:
         try:
