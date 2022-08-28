@@ -35,7 +35,6 @@ commands. I can copy and paste to my spreadsheet software.
 Install for local development:
 
    ```sh
-   pip install --editable .
    pip install --editable '.[testing]'
    pre-commit install
    ```
