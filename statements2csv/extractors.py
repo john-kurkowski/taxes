@@ -1,9 +1,10 @@
 """Callables to identify and extract transaction data from supported banks'
 statements."""
 
-import datetime
 from abc import abstractmethod
-from typing import NamedTuple, Optional, Protocol, Sequence
+import datetime
+from collections.abc import Sequence
+from typing import NamedTuple, Protocol
 
 import dateutil.parser
 import pandas
@@ -31,7 +32,7 @@ class Extractor(Protocol):
 
     def __call__(
         self, year: int, dataframe: pandas.core.frame.DataFrame
-    ) -> Optional[Extraction]:
+    ) -> Extraction | None:
         if not self.is_match(dataframe):
             return None
 
@@ -231,7 +232,7 @@ def _date_parse(year: int, text: str) -> datetime.date:
     return parsed.replace(year=year).date()
 
 
-def _maybe_date_parse(year: int, text: str) -> Optional[datetime.date]:
+def _maybe_date_parse(year: int, text: str) -> datetime.date | None:
     """Same as _date_parse, but ignores non-date strings by catching a date
     parse error, and returning `None`."""
 
