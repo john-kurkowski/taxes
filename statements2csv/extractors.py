@@ -4,7 +4,7 @@ statements."""
 from abc import abstractmethod
 import datetime
 from collections.abc import Sequence
-from typing import NamedTuple, Protocol
+from typing import Any, NamedTuple, Protocol, cast
 
 import dateutil.parser
 import pandas
@@ -153,8 +153,14 @@ class ExtractorCapitalOne(Extractor):
 
     def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
         date_header_idx = [val.lower() for val in dataframe[0].values].index("date")
+
         amount_col_idx = (
-            dataframe.loc[date_header_idx].loc[lambda x: x == "AMOUNT"].index[0]
+            dataframe.loc[date_header_idx]
+            .loc[
+                # Work around incomplete type stub. It accepts a Callable.
+                cast(Any, lambda x: x == "AMOUNT")
+            ]
+            .index[0]
         )
         return {
             0: "Date",
