@@ -51,10 +51,7 @@ class Extractor(Protocol):
         dataframe.rename(columns=column_names, inplace=True)
 
         dataframe["Date"] = [
-            pandas.to_datetime(some_date)
-            if (some_date := _maybe_date_parse(year, date))
-            else None
-            for date in dataframe["Date"]
+            _maybe_date_parse(year, date) for date in dataframe["Date"]
         ]
 
         dataframe.drop(
