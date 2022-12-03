@@ -51,7 +51,12 @@ class Extractor(Protocol):
         dataframe.rename(columns=column_names, inplace=True)
 
         dataframe["Date"] = pandas.to_datetime(
-            [_maybe_date_parse(year, date) for date in dataframe["Date"]]
+            [
+                # Work around incomplete type stub. `pandas.to_datetime`
+                # accepts `datetime.date` and `None`.
+                cast(datetime.datetime, _maybe_date_parse(year, date))
+                for date in dataframe["Date"]
+            ]
         )
 
         dataframe.drop(
