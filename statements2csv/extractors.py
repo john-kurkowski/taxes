@@ -4,6 +4,7 @@ statements."""
 from abc import abstractmethod
 import datetime
 from collections.abc import Sequence
+import re
 from typing import Any, NamedTuple, Protocol, cast
 
 import dateutil.parser
@@ -173,10 +174,12 @@ class ExtractorChase(Extractor):
     """Extract transactions from Chase statements. They have 1 of a few words
     in the first cell of the table."""
 
+    IS_MATCH_RE = re.compile(
+        r"\s+".join(("Merchant", "Name", "or", "Transaction", "Description"))
+    )
+
     def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
-        first_cell_sentinels = ("account activity", "date of")
-        first_cell = dataframe[0][0].lower().strip()
-        return any(first_cell.startswith(sentinel) for sentinel in first_cell_sentinels)
+        return bool(self.IS_MATCH_RE.search(str(dataframe)))
 
     def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
         return {
