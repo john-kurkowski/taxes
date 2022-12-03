@@ -50,14 +50,12 @@ class Extractor(Protocol):
         )
         dataframe.rename(columns=column_names, inplace=True)
 
-        dataframe["Date"] = pandas.to_datetime(
-            [
-                # Work around incomplete type stub. `pandas.to_datetime`
-                # accepts `datetime.date` and `None`.
-                cast(datetime.datetime, _maybe_date_parse(year, date))
-                for date in dataframe["Date"]
-            ]
-        )
+        dataframe["Date"] = [
+            pandas.to_datetime(some_date)
+            if (some_date := _maybe_date_parse(year, date))
+            else None
+            for date in dataframe["Date"]
+        ]
 
         dataframe.drop(
             index=dataframe.loc[self.unwanted_rows(dataframe)].index,
