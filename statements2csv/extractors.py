@@ -179,7 +179,7 @@ class ExtractorChase(Extractor):
     )
 
     def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
-        return bool(self.IS_MATCH_RE.search(str(dataframe)))
+        return bool(self.IS_MATCH_RE.search(dataframe.to_string()))
 
     def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
         return {
