@@ -18,9 +18,8 @@ Date,Description,Amount
 …
 ```
 
-Run `statements2csv --help` for more details. You can get a little
-more debugging info by reducing the env var `LOGLEVEL`, which defaults to
-`WARNING`.
+Run `statements2csv --help` for more details. You can get a little more
+debugging info by reducing the env var `LOGLEVEL`, which defaults to `WARNING`.
 
 ### Motivation
 
@@ -34,15 +33,15 @@ commands. I can copy and paste to my spreadsheet software.
 
 Install for local development:
 
-   ```sh
-   pip install --editable '.[testing]'
-   pre-commit install
-   ```
+```sh
+pip install --editable '.[testing]'
+pre-commit install
+```
 
 ### Tests
 
-Checks are run on commit, after installing the pre-commit hook above, and on
-push. You can also run them manually.
+Checks are run on commit, after installing the pre-commit hook
+above, and on push. You can also run them manually.
 
 ```sh
 pre-commit run --all-files
