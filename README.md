@@ -40,7 +40,11 @@ pre-commit install
 
 ### Tests
 
-Checks are run on commit, after installing the pre-commit hook
+```sh
+pytest
+```
+
+Besides tests, checks are run on commit, after installing the pre-commit hook
 above, and on push. You can also run them manually.
 
 ```sh
