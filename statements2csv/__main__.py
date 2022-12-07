@@ -22,9 +22,8 @@ def extract_file(fil: pathlib.Path) -> list[Extraction]:
     """Convert 1 bank statement PDF to a list of its tables that contain
     transactions."""
 
-    result = sorted(
-        extract_dataframes(fil), key=lambda extraction: extraction.date_start
-    )
+    dfs = extract_dataframes(fil)
+    result = sorted(dfs, key=lambda extraction: extraction.date_start)
     if not result:
         logging.warning('File "%s" had nothing to extract', fil)
     return result
