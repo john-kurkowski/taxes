@@ -37,7 +37,11 @@ class Extractor(Protocol):
         if not self.is_match(dataframe):
             return None
 
-        return self._extract(year, dataframe)
+        extraction = self._extract(year, dataframe)
+        if extraction.dataframe.empty:
+            return None
+
+        return extraction
 
     def _extract(self, year: int, dataframe: pandas.core.frame.DataFrame) -> Extraction:
         """The core transaction table extraction steps, shared by all banks."""
