@@ -5,12 +5,10 @@ Keep to a minimum. https://testing.googleblog.com/2015/04/just-say-no-to-more-en
 
 import os.path
 from pathlib import Path
-from typing import Any
 
 import pytest
 from click.testing import CliRunner
 from syrupy import SnapshotAssertion
-from syrupy.extensions.amber import AmberSnapshotExtension
 from wcmatch import glob
 
 from statements2csv.__main__ import main
@@ -42,15 +40,3 @@ def test_integration(
 
     assert result.exit_code == 0
     assert result.output == secret_snapshot
-
-
-@pytest.fixture
-def secret_snapshot(snapshot: SnapshotAssertion) -> SnapshotAssertion:
-    class DifferentDirectoryExtension(AmberSnapshotExtension):
-        @classmethod
-        def dirname(cls, *args: Any, **kwargs: Any) -> str:
-            """Override."""
-            default = Path(super().dirname(*args, **kwargs))
-            return str(default / "secrets")
-
-    return snapshot.use_extension(DifferentDirectoryExtension)
