@@ -3,7 +3,7 @@
 import logging
 import pathlib
 import re
-from typing import Generator
+from collections.abc import Generator
 
 import camelot  # type: ignore[import]
 
@@ -13,11 +13,12 @@ YEAR_RE = re.compile(r"^\d{4}$")
 
 
 def extract_dataframes(fil: pathlib.Path) -> Generator[Extraction, None, None]:
-    """Parses the given PDF's tables for bank transactions, lazily yielding one
-    table at a time. Excludes non-transaction tables. For each table, tries all
-    supported banks in a consistent order. The first bank that yields a result
-    yields from this function. If no banks match, the table is skipped."""
+    """Parse the given PDF's tables for bank transactions, lazily yielding one table at a time.
 
+    Exclude non-transaction tables. For each table, tries all supported banks
+    in a consistent order. The first bank that yields a result yields from this
+    function. If no banks match, the table is skipped.
+    """
     year = _parse_year_from_absolute_filepath(fil.resolve())
 
     try:

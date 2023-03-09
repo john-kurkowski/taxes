@@ -1,6 +1,6 @@
-"""
-Minimal setup file necessary for tools to detect Python projects. Actual
-configuration is in setup.cfg.
+"""Minimal setup file necessary for tools to detect Python projects.
+
+Actual configuration is in setup.cfg.
 """
 
 from setuptools import setup  # type: ignore[import]

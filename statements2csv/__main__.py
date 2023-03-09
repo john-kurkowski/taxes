@@ -10,7 +10,7 @@ import multiprocessing
 import os
 import pathlib
 import sys
-from typing import Sequence
+from collections.abc import Sequence
 
 import click
 
@@ -19,9 +19,7 @@ from .extractors import Extraction
 
 
 def extract_file(fil: pathlib.Path) -> list[Extraction]:
-    """Convert 1 bank statement PDF to a list of its tables that contain
-    transactions."""
-
+    """Convert 1 bank statement PDF to a list of its transaction tables."""
     dfs = extract_dataframes(fil)
     result = sorted(dfs, key=lambda extraction: extraction.date_start)
     if not result:
@@ -33,7 +31,6 @@ def extract_file(fil: pathlib.Path) -> list[Extraction]:
 @click.argument("files", nargs=-1, required=True, type=pathlib.Path)
 def main(files: Sequence[pathlib.Path]) -> None:
     """Convert FILES bank statement PDFs to CSV on stdout."""
-
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "WARNING").upper())
 
     num_cores_that_hopefully_wont_max_out_machine = multiprocessing.cpu_count() // 2

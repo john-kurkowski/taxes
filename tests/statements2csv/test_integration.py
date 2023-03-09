@@ -1,15 +1,14 @@
-"""Integration tests for the entire project. Keep to a minimum.
-https://testing.googleblog.com/2015/04/just-say-no-to-more-end-to-end-tests.html
-"""
+"""Integration tests for the entire project.
 
-# pylint: disable=missing-function-docstring,redefined-outer-name
+Keep to a minimum. https://testing.googleblog.com/2015/04/just-say-no-to-more-end-to-end-tests.html.
+"""
 
 import glob
 import os.path
 from pathlib import Path
 
-from click.testing import CliRunner
 import pytest
+from click.testing import CliRunner
 
 from statements2csv.__main__ import main
 
