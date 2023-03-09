@@ -5,9 +5,12 @@ Keep to a minimum. https://testing.googleblog.com/2015/04/just-say-no-to-more-en
 
 import os.path
 from pathlib import Path
+from typing import Any
 
 import pytest
 from click.testing import CliRunner
+from syrupy import SnapshotAssertion
+from syrupy.extensions.amber import AmberSnapshotExtension
 from wcmatch import glob
 
 from statements2csv.__main__ import main
@@ -44,13 +47,25 @@ def all_pdfs_output() -> str | None:
 
 
 def test_integration(
-    all_pdfs_input: list[str] | None, all_pdfs_output: str | None
+    all_pdfs_input: list[str] | None, secret_snapshot: SnapshotAssertion
 ) -> None:
-    if not (all_pdfs_input and all_pdfs_output):
+    if not all_pdfs_input:
         pytest.skip("Can't test encrypted files")
         return
 
     result = CliRunner().invoke(main, all_pdfs_input)
 
     assert result.exit_code == 0
-    assert result.output == all_pdfs_output
+    assert result.output == secret_snapshot
+
+
+@pytest.fixture
+def secret_snapshot(snapshot: SnapshotAssertion) -> SnapshotAssertion:
+    class DifferentDirectoryExtension(AmberSnapshotExtension):
+        @classmethod
+        def dirname(cls, *args: Any, **kwargs: Any) -> str:
+            """Override."""
+            default = Path(super().dirname(*args, **kwargs))
+            return str(default / "secrets")
+
+    return snapshot.use_extension(DifferentDirectoryExtension)
