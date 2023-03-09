@@ -3,12 +3,12 @@
 Keep to a minimum. https://testing.googleblog.com/2015/04/just-say-no-to-more-end-to-end-tests.html.
 """
 
-import glob
 import os.path
 from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+from wcmatch import glob
 
 from statements2csv.__main__ import main
 
@@ -20,7 +20,7 @@ def all_pdfs_input() -> list[str] | None:
             Path(os.path.dirname(__file__)) / "secrets" / "all_pdfs.lnk",
             encoding="utf-8",
         ) as fil:
-            result = glob.glob(fil.read().strip())
+            result = glob.glob(fil.read().strip(), flags=glob.BRACE | glob.GLOBTILDE)
     except UnicodeDecodeError:
         return None
 
