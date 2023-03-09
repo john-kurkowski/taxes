@@ -31,21 +31,6 @@ def all_pdfs_input() -> list[str] | None:
     return result
 
 
-@pytest.fixture
-def all_pdfs_output() -> str | None:
-    try:
-        with open(
-            Path(os.path.dirname(__file__)) / "secrets" / "all_pdfs_snapshot.txt",
-            encoding="utf-8",
-        ) as fil:
-            result = fil.read()
-    except UnicodeDecodeError:
-        return None
-
-    assert result
-    return result
-
-
 def test_integration(
     all_pdfs_input: list[str] | None, secret_snapshot: SnapshotAssertion
 ) -> None:
