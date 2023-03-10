@@ -1,3 +1,31 @@
+[project]
+name = "taxes"
+version = "1.0.0"
+license = { text = "Proprietary" }
+requires-python = ">=3.10"
+dependencies = [
+    "PyPDF2 < 3.0",
+    "camelot-py[all]",
+    "click",
+    "pandas",
+]
+
+[project.optional-dependencies]
+testing = [
+    "black",
+    "mypy",
+    "pandas-stubs",
+    "pre-commit",
+    "pytest",
+    "ruff",
+    "syrupy",
+    "types-python-dateutil",
+    "wcmatch",
+]
+
+[project.scripts]
+statements2csv = "statements2csv.__main__:main"
+
 [tool.ruff]
 select = [
   "A",
