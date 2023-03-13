@@ -27,4 +27,4 @@ jobs:
         pre-commit run --all-files
     - name: Tests
       run: |
-        pytest --snapshot-warn-unused
+        PYTHONPATH=. pytest --snapshot-warn-unused

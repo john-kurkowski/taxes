@@ -41,7 +41,7 @@ pre-commit install
 ### Tests
 
 ```sh
-pytest
+PYTHONPATH=. pytest
 ```
 
 Besides tests, checks are run on commit, after installing the pre-commit hook
