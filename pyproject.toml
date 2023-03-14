@@ -25,6 +25,7 @@ testing = [
 
 [project.scripts]
 statements2csv = "statements2csv.__main__:main"
+gt = "greptransactions.__main__:main"
 
 [tool.ruff]
 select = [

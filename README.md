@@ -8,8 +8,8 @@ pip install .
 
 ## statements2csv
 
-This script converts bank statement PDFs from the banks I use, listed as
-arguments, to plain text CSV on stdout. Example usage:
+Convert bank statement PDFs from the banks I use, listed as arguments, to plain
+text CSV on stdout. Example usage:
 
 ```zsh
 $ statements2csv input1.pdf input2.pdf
@@ -28,6 +28,26 @@ bank transactions; its search was slow, besides. I save all my digital
 statements anyway, for tax purposes. I figured, I can use fast grep on the
 locally synced PDFs, instead of the official UIs. I can pipe to other Unix
 commands. I can copy and paste to my spreadsheet software.
+
+## greptransactions (gt)
+
+Grep CSV transactions for the given year and pattern. Example usage:
+
+```sh
+$ gt amazon | head -2
+2022-02-08,Amazon.com*JQ87H3XZ3 Amzn.com/bill WA,4.34
+2022-02-16,Amazon.com*5U8Z05QS3 Amzn.com/bill WA,51.13
+
+$ gt 2021 amazon | head -2
+2021-01-21,Amazon.com*T17O517I3 Amzn.com/bill WA,35.15
+2021-03-03,Amazon.com*LJ4J51LF3 Amzn.com/bill WA,3.68
+```
+
+It is a thin wrapper around Ripgrep, executing a regex pattern against an
+existing snapshot of `statements2csv` output. Makes the grep command easier to
+type. Massages the CSV slightly, to be more suitable for copy and paste into a
+spreadsheet. Defaults to transactions from the previous calendar year, if year
+not provided.
 
 ## Contribute
 
