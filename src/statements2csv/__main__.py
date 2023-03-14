@@ -1,15 +1,10 @@
-#!/usr/bin/env python
-
-
 """CLI for this package."""
-
 
 import itertools
 import logging
 import multiprocessing
 import os
 import pathlib
-import sys
 from collections.abc import Sequence
 
 import click
@@ -60,5 +55,5 @@ def main(files: Sequence[pathlib.Path]) -> None:
         )
 
 
-if __name__ == "__main__":
-    main(sys.argv[1:])
+if __name__ == "__main__":  # pragma: no cover
+    main()
