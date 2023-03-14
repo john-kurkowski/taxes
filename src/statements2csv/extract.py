@@ -3,7 +3,7 @@
 import logging
 import pathlib
 import re
-from collections.abc import Generator
+from collections.abc import Iterator
 
 import camelot  # type: ignore[import]
 
@@ -12,7 +12,7 @@ from .extractors import ALL_EXTRACTORS, Extraction
 YEAR_RE = re.compile(r"^\d{4}$")
 
 
-def extract_dataframes(fil: pathlib.Path) -> Generator[Extraction, None, None]:
+def extract_dataframes(fil: pathlib.Path) -> Iterator[Extraction]:
     """Parse the given PDF's tables for bank transactions, lazily yielding one table at a time.
 
     Exclude non-transaction tables. For each table, tries all supported banks.
