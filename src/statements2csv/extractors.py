@@ -48,9 +48,9 @@ class Extractor(Protocol):
         """Core transaction table extraction steps, shared by all banks."""
         column_names = self.column_names(dataframe)
 
-        dataframe.drop(
+        # Copy the dataframe, so further massage can be done in-place.
+        dataframe = dataframe.drop(
             columns=[col for col in dataframe.columns if col not in column_names],
-            inplace=True,
         )
         dataframe.rename(columns=column_names, inplace=True)
 
