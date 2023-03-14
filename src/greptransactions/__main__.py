@@ -27,9 +27,9 @@ def main(year: int, pattern: str) -> None:
     file = (
         Path(__file__).parent.parent.parent
         / "tests"
-        / "statements2csv"
         / "__snapshots__"
         / "secrets"
+        / "all"
         / "test_integration.ambr"
     )
 
