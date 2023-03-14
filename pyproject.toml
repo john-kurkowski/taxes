@@ -13,6 +13,7 @@ dependencies = [
 [project.optional-dependencies]
 testing = [
     "black",
+    "freezegun",
     "mypy",
     "pandas-stubs",
     "pre-commit",
