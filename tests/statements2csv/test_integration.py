@@ -29,10 +29,25 @@ def all_pdfs_input() -> list[str] | None:
     return result
 
 
-def test_integration(
+def test_integration_one_file(
     all_pdfs_input: list[str] | None, secret_snapshot: SnapshotAssertion
 ) -> None:
-    if not all_pdfs_input:
+    if all_pdfs_input is None:
+        pytest.skip("Can't test encrypted files")
+        return
+
+    one_pdfs_input = all_pdfs_input[:1]
+
+    result = CliRunner().invoke(main, one_pdfs_input)
+
+    assert result.exit_code == 0
+    assert result.output == secret_snapshot
+
+
+def test_integration_all_files(
+    all_pdfs_input: list[str] | None, secret_snapshot: SnapshotAssertion
+) -> None:
+    if all_pdfs_input is None:
         pytest.skip("Can't test encrypted files")
         return
 
