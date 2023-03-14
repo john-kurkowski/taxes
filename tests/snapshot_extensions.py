@@ -6,6 +6,7 @@ from typing import Any
 from syrupy.data import SnapshotCollection
 from syrupy.extensions.amber import AmberSnapshotExtension
 from syrupy.extensions.amber.serializer import AmberDataSerializer
+from syrupy.extensions.base import AbstractSyrupyExtension
 
 
 class CryptAwareSerializer(AmberDataSerializer):
@@ -33,17 +34,25 @@ class CryptAwareExtension(AmberSnapshotExtension):
     serializer_class = CryptAwareSerializer
 
 
-class SecretsDirectoryExtension(AmberSnapshotExtension):
+def secrets_directory_extension_factory(
+    additional_folder_names: Path | None = None,
+) -> type[AbstractSyrupyExtension]:
     """Use custom snapshots folder.
 
     Using a separate folder eases distinguishing which files should be
     encrypted or not.
     """
 
-    serializer_class = CryptAwareSerializer
+    class SecretsDirectoryExtension(AmberSnapshotExtension):
+        serializer_class = CryptAwareSerializer
 
-    @classmethod
-    def dirname(cls, *args: Any, **kwargs: Any) -> str:
-        """Override."""
-        default = Path(super().dirname(*args, **kwargs))
-        return str(default / "secrets")
+        @classmethod
+        def dirname(cls, *args: Any, **kwargs: Any) -> str:
+            """Override."""
+            default = Path(super().dirname(*args, **kwargs))
+            secrets = default / "secrets"
+            if additional_folder_names:
+                secrets /= additional_folder_names
+            return str(secrets)
+
+    return SecretsDirectoryExtension

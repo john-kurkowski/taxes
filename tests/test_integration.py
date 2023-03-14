@@ -13,6 +13,8 @@ from wcmatch import glob
 
 from statements2csv.__main__ import main as statements2csv
 
+from .snapshot_extensions import secrets_directory_extension_factory
+
 
 @pytest.fixture
 def all_pdfs_input() -> list[str] | None:
@@ -27,6 +29,16 @@ def all_pdfs_input() -> list[str] | None:
 
     assert result
     return result
+
+
+@pytest.fixture
+def secret_snapshot(snapshot):
+    return snapshot.use_extension(secrets_directory_extension_factory())
+
+
+@pytest.fixture
+def secret_snapshot_all_pdfs(snapshot):
+    return snapshot.use_extension(secrets_directory_extension_factory(Path("all")))
 
 
 def test_statements2csv_one_file(
@@ -47,7 +59,7 @@ def test_statements2csv_one_file(
 
 
 def test_statements2csv_all_files(
-    all_pdfs_input: list[str] | None, secret_snapshot: SnapshotAssertion
+    all_pdfs_input: list[str] | None, secret_snapshot_all_pdfs: SnapshotAssertion
 ) -> None:
     if all_pdfs_input is None:
         pytest.skip("Can't test encrypted files")
@@ -57,4 +69,4 @@ def test_statements2csv_all_files(
 
     assert result.exit_code == 0
     assert result.output
-    assert result.output == secret_snapshot
+    assert result.output == secret_snapshot_all_pdfs
