@@ -15,9 +15,9 @@ YEAR_RE = re.compile(r"^\d{4}$")
 def extract_dataframes(fil: pathlib.Path) -> Generator[Extraction, None, None]:
     """Parse the given PDF's tables for bank transactions, lazily yielding one table at a time.
 
-    Exclude non-transaction tables. For each table, tries all supported banks
-    in a consistent order. The first bank that yields a result yields from this
-    function. If no banks match, the table is skipped.
+    Exclude non-transaction tables. For each table, tries all supported banks.
+    The first bank that yields a result yields from this function. If no banks
+    match, the table is skipped.
     """
     year = _parse_year_from_absolute_filepath(fil.resolve())
 
@@ -35,15 +35,21 @@ def extract_dataframes(fil: pathlib.Path) -> Generator[Extraction, None, None]:
 
     last_extraction = None
     for table in tables:
-        try:
-            extractor, extraction = next(
-                (extractor, extraction)
-                for extractor in ALL_EXTRACTORS
-                if (extraction := extractor(year, table.df))
-            )
-        except StopIteration:
+        matching_extractors = [
+            (extractor, next_extraction)
+            for extractor in ALL_EXTRACTORS
+            if (next_extraction := extractor(year, table.df))
+        ]
+        if not matching_extractors:
             continue
+        elif len(matching_extractors) > 1:
+            logging.warning(
+                'Multiple extractors matched file "%s": "%s"',
+                fil,
+                [extractor for (extractor, _) in matching_extractors],
+            )
 
+        extractor, extraction = matching_extractors[0]
         is_duplicate_extraction = last_extraction and extraction.dataframe.equals(
             last_extraction.dataframe
         )
