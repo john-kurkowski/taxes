@@ -17,6 +17,7 @@ testing = [
     "pandas-stubs",
     "pre-commit",
     "pytest",
+    "pytest-cov",
     "ruff",
     "syrupy",
     "types-python-dateutil",
@@ -53,6 +54,10 @@ convention = "pep257"
 
 [tool.pytest.ini_options]
 addopts = [
+  '--cov',
+  'src',
+  '--cov-report',
+  'html',
   '--snapshot-default-extension',
   'tests.statements2csv.snapshot_extensions.CryptAwareExtension',
 ]
