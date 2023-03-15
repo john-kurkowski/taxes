@@ -92,12 +92,23 @@ def test_greptransactions_default_year(
     result2 = CliRunner().invoke(greptransactions, ["--year", "2022", pattern])
     output2, err2 = capfd.readouterr()
 
+    result3 = CliRunner().invoke(
+        greptransactions, ["--year", "2021", "--year", "2022", pattern]
+    )
+    output3, err3 = capfd.readouterr()
+
     assert result1.exit_code == 0
     assert result2.exit_code == 0
+    assert result3.exit_code == 0
     assert not err1
     assert not err2
+    assert not err3
     assert output1
     assert output2
+    assert output3
     assert output1 != output2
+    assert output1 != output3
+    assert output2 != output3
     assert output1 == secret_snapshot
     assert output2 == secret_snapshot
+    assert output3 == secret_snapshot

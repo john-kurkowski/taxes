@@ -11,11 +11,12 @@ import click
 @click.option(
     "-y",
     "--year",
-    default=lambda: datetime.date.today().year - 1,
+    default=lambda: [datetime.date.today().year - 1],
+    multiple=True,
     type=int,
 )
 @click.argument("pattern")
-def main(year: int, pattern: str) -> None:
+def main(year: list[int], pattern: str) -> None:
     """Grep CSV transactions for the given year and pattern.
 
     Executes the given regex pattern against a pre-existing snapshot of
@@ -35,7 +36,7 @@ def main(year: int, pattern: str) -> None:
 
     cmd: list[str | Path] = [
         Path(__file__).parent / "greptransactions.sh",
-        str(year),
+        "|".join(str(y) for y in year),
         pattern,
         file,
     ]
