@@ -44,11 +44,10 @@ $ gt --year 2021 amazon | head -2
 2021-03-03,Amazon.com*LJ4J51LF3 Amzn.com/bill WA,3.68
 ```
 
-It is a thin wrapper around Ripgrep, executing a regex pattern against an
-existing snapshot of `statements2csv` output. Makes the grep command easier to
-type. Massages the CSV slightly, to be more suitable for copy and paste into a
-spreadsheet. Defaults to transactions from the previous calendar year, if year
-not provided.
+Executes the given regex pattern against a pre-existing snapshot of
+`statements2csv`, across all bank statements. A thin wrapper around Ripgrep,
+this command basically just makes the grep command easier to type. Defaults to
+transactions from the previous calendar year, if year not provided.
 
 ## Contribute
 

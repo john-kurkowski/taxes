@@ -20,10 +20,10 @@ def main(year: list[int], pattern: str) -> None:
     """Grep CSV transactions for the given year and pattern.
 
     Executes the given regex pattern against a pre-existing snapshot of
-    `statements2csv`, across all bank statements. Makes the grep command easier
-    to type. Massages the CSV slightly, to be more suitable for copy and paste
-    into a spreadsheet. Defaults to transactions from the previous calendar
-    year, if year not provided.
+    `statements2csv`, across all bank statements. A thin wrapper around
+    Ripgrep, this command basically just makes the grep command easier to type.
+    Defaults to transactions from the previous calendar year, if year not
+    provided.
     """
     file = (
         Path(__file__).parent.parent.parent
