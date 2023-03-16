@@ -2,11 +2,15 @@
 
 ## Install
 
+Make the commands listed in the next section available on your system with the following.
+
 ```zsh
 pip install .
 ```
 
-## statements2csv
+## Commands
+
+### statements2csv
 
 Convert bank statement PDFs from the banks I use, listed as arguments, to plain
 text CSV on stdout. Example usage:
@@ -21,7 +25,7 @@ Date,Description,Amount
 Run `statements2csv --help` for more details. You can get a little more
 debugging info by reducing the env var `LOGLEVEL`, which defaults to `WARNING`.
 
-### Motivation
+#### Motivation
 
 My banks' official transaction search UIs suck. Mint stopped aggregating all my
 bank transactions; its search was slow, besides. I save all my digital
@@ -30,7 +34,7 @@ locally synced PDFs (like `greptransactions`, below), instead of the official
 UIs. I can pipe to other Unix commands. I can copy and paste to my spreadsheet
 software.
 
-## greptransactions (gt)
+### greptransactions (gt)
 
 Grep CSV transactions for the given year and pattern. Example usage:
 
