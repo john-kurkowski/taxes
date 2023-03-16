@@ -1,11 +1,16 @@
 # taxes
 
+## Prerequisites
+
+* [`just`](https://github.com/casey/just)
+* Python >=3.10
+
 ## Install
 
 Make the commands listed in the next section available on your system with the following.
 
 ```zsh
-pip install .
+just install
 ```
 
 ## Commands
@@ -58,19 +63,18 @@ transactions from the previous calendar year, if year not provided.
 Install for local development:
 
 ```sh
-pip install --editable '.[testing]'
-pre-commit install
+just bootstrap
 ```
 
 ### Tests
 
 ```sh
-PYTHONPATH=. pytest
+just test
 ```
 
 Besides tests, checks are run on commit, after installing the pre-commit hook
 above, and on push. You can also run them manually.
 
 ```sh
-pre-commit run --all-files
+just check
 ```
