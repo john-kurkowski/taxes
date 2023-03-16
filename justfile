@@ -25,3 +25,10 @@ bootstrap:
 [no-exit-message]
 @test *options:
   PYTHONPATH=. pytest {{options}}
+
+# Run tests and watch for changes. Options are forwarded to `pytest`.
+test-watch *options:
+  #!/usr/bin/env sh
+  export CMD='just test {{options}}'
+  "$SHELL" -c "$CMD"
+  fswatch --one-per-batch $(git ls-files .) | xargs -n1 -I{} "$SHELL" -c "$CMD"
