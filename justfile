@@ -1,3 +1,4 @@
+# List recipes
 default:
   just --list
 
@@ -20,6 +21,6 @@ bootstrap:
 @install:
   pip install .
 
-# Run tests
+# Run tests. Options are forwarded to `pytest`.
 @test *options:
   PYTHONPATH=. pytest {{options}}
