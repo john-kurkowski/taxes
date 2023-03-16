@@ -22,5 +22,6 @@ bootstrap:
   pip install .
 
 # Run tests. Options are forwarded to `pytest`.
+[no-exit-message]
 @test *options:
   PYTHONPATH=. pytest {{options}}
