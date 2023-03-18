@@ -5,7 +5,6 @@ import logging
 import multiprocessing
 import os
 import pathlib
-from collections.abc import Sequence
 
 import click
 
@@ -24,13 +23,14 @@ def extract_file(fil: pathlib.Path) -> list[Extraction]:
 
 @click.command()
 @click.argument("files", nargs=-1, required=True, type=pathlib.Path)
-def main(files: Sequence[pathlib.Path]) -> None:
+def main(files: list[pathlib.Path]) -> None:
     """Convert FILES bank statement PDFs to CSV on stdout."""
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "WARNING").upper())
 
     num_cores_that_hopefully_wont_max_out_machine = multiprocessing.cpu_count() // 2
-    if len(files) <= 1 or num_cores_that_hopefully_wont_max_out_machine <= 1:
-        sorted_extractions = extract_file(files[0])
+    do_serially = len(files) <= 1 or num_cores_that_hopefully_wont_max_out_machine <= 1
+    if do_serially:
+        extractions = [extract_file(fil) for fil in files]
     else:
         # Let through child process logging to stderr. Note on macOS, this line is
         # considered unsafe.
@@ -42,10 +42,10 @@ def main(files: Sequence[pathlib.Path]) -> None:
         ) as pool:
             extractions = pool.map(extract_file, files)
 
-        flattened_extractions = itertools.chain.from_iterable(extractions)
-        sorted_extractions = sorted(
-            flattened_extractions, key=lambda extraction: extraction.date_start
-        )
+    flattened_extractions = itertools.chain.from_iterable(extractions)
+    sorted_extractions = sorted(
+        flattened_extractions, key=lambda extraction: extraction.date_start
+    )
 
     for i, extraction in enumerate(sorted_extractions):
         is_first = i == 0
