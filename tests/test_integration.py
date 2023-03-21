@@ -35,12 +35,12 @@ def all_pdfs_input() -> list[str] | None:
 
 
 @pytest.fixture
-def secret_snapshot(snapshot):
+def secret_snapshot(snapshot: SnapshotAssertion) -> SnapshotAssertion:
     return snapshot.use_extension(secrets_directory_extension_factory())
 
 
 @pytest.fixture
-def secret_snapshot_all_pdfs(snapshot):
+def secret_snapshot_all_pdfs(snapshot: SnapshotAssertion) -> SnapshotAssertion:
     return snapshot.use_extension(secrets_directory_extension_factory(Path("all")))
 
 
