@@ -2,6 +2,7 @@
 
 import datetime
 import subprocess
+import sys
 from pathlib import Path
 
 import click
@@ -41,7 +42,8 @@ def main(year: list[int], pattern: str) -> None:
         file,
     ]
 
-    subprocess.run(cmd, check=True, text=True)
+    proc = subprocess.run(cmd, text=True)
+    sys.exit(proc.returncode)
 
 
 if __name__ == "__main__":  # pragma: no cover
