@@ -21,6 +21,11 @@ from .snapshot_extensions import secrets_directory_extension_factory
 
 @pytest.fixture
 def all_pdfs_input() -> list[str] | None:
+    """List all PDFs used in the tests.
+
+    Reads a file containing a path with glob expressions. Returns None if the
+    file is encrypted.
+    """
     try:
         with open(
             Path(os.path.dirname(__file__)) / "secrets" / "all_pdfs.lnk",
@@ -36,11 +41,13 @@ def all_pdfs_input() -> list[str] | None:
 
 @pytest.fixture
 def secret_snapshot(snapshot: SnapshotAssertion) -> SnapshotAssertion:
+    """Return a Syrupy snapshot with _some_ encrypted files."""
     return snapshot.use_extension(secrets_directory_extension_factory())
 
 
 @pytest.fixture
 def secret_snapshot_all_pdfs(snapshot: SnapshotAssertion) -> SnapshotAssertion:
+    """Return a Syrupy snapshot with _all_ encrypted files."""
     return snapshot.use_extension(secrets_directory_extension_factory(Path("all")))
 
 
@@ -48,6 +55,12 @@ def test_statements2csv_one_file(
     all_pdfs_input: list[str] | None,
     secret_snapshot: SnapshotAssertion,
 ) -> None:
+    """Test the `statements2csv` command with one input file.
+
+    This integration test case runs fairly quickly, so consider running only
+    the test case for quick development cycles, and save the entire test suite
+    for later.
+    """
     if all_pdfs_input is None:
         pytest.skip("Can't test encrypted files")
         return
@@ -64,6 +77,11 @@ def test_statements2csv_one_file(
 def test_statements2csv_all_files(
     all_pdfs_input: list[str] | None, secret_snapshot_all_pdfs: SnapshotAssertion
 ) -> None:
+    """Test the `statements2csv` command with multiple files.
+
+    This integration test case takes a long time to run, so consider excluding
+    it during development.
+    """
     if all_pdfs_input is None:
         pytest.skip("Can't test encrypted files")
         return
@@ -81,6 +99,11 @@ def test_greptransactions_default_year(
     capfd: pytest.CaptureFixture,
     secret_snapshot: SnapshotAssertion,
 ) -> None:
+    """Test the `greptransactions` command.
+
+    Depending on the default year, a single specified year, and multiple
+    specified years, grep output should differ.
+    """
     if all_pdfs_input is None:
         pytest.skip("Can't test encrypted files")
         return
