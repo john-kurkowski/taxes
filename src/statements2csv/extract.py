@@ -5,7 +5,7 @@ import pathlib
 import re
 from collections.abc import Iterator
 
-import camelot  # type: ignore[import]
+import camelot  # type: ignore[import-untyped]
 
 from .extractors import ALL_EXTRACTORS, Extraction
 

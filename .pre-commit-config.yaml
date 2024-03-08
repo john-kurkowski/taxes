@@ -4,7 +4,9 @@ repos:
     hooks:
     -   id: mypy
         args: []
+        entry: mypy src tests
         language: system
+        pass_filenames: false
 -   repo: https://github.com/charliermarsh/ruff-pre-commit
     rev: v0.3.1  # key required by pre-commit, but ignored in practice, because we use the "system" version of the tool, set in pyproject.toml
     hooks:

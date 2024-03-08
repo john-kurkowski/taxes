@@ -18,7 +18,7 @@ class Extraction(NamedTuple):
     @property
     def date_start(self) -> datetime.date:
         """The earliest date in the extracted table."""
-        return self.dataframe["Date"].min()
+        return cast(datetime.date, self.dataframe["Date"].min())
 
 
 class Extractor(Protocol):
@@ -50,7 +50,7 @@ class Extractor(Protocol):
 
         # Copy the dataframe, so further massage can be done in-place.
         dataframe = dataframe.drop(
-            columns=[col for col in dataframe.columns if col not in column_names],
+            columns=[col for col in dataframe.columns if col not in column_names],  # type: ignore[comparison-overlap]
         )
         dataframe.rename(columns=column_names, inplace=True)
 
@@ -77,7 +77,7 @@ class Extractor(Protocol):
         Date, Description, and Amount.
         """
 
-    def unwanted_rows(self, dataframe: pandas.core.frame.DataFrame) -> pandas.Series:
+    def unwanted_rows(self, dataframe: pandas.core.frame.DataFrame) -> pandas.Series:  # type: ignore[type-arg]
         """Select dataframe rows to be dropped, after parsing is complete, before data is returned to the caller.
 
         For example, select rows with invalid dates.
@@ -101,7 +101,7 @@ class ExtractorAppleCard(Extractor):
     def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
         """Override."""
 
-        def is_row_match(row: pandas.core.series.Series) -> bool:
+        def is_row_match(row: pandas.core.series.Series) -> bool:  # type: ignore[type-arg]
             row_texts = {cell_text.lower().strip() for cell_text in row}
             return "date" in row_texts and "daily cash" in row_texts
 
@@ -129,7 +129,7 @@ class ExtractorBankOfAmerica(Extractor):
 
         def is_row_match(row_i: int) -> bool:
             try:
-                return dataframe.iat[row_i, 0] == dataframe.iat[row_i, 1] == "Date"
+                return dataframe.iat[row_i, 0] == dataframe.iat[row_i, 1] == "Date"  # type: ignore[no-any-return]
             except IndexError:
                 return False
 

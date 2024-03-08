@@ -10,7 +10,7 @@ from pathlib import Path
 import freezegun
 import pytest
 from click.testing import CliRunner
-from syrupy import SnapshotAssertion
+from syrupy.assertion import SnapshotAssertion
 from wcmatch import glob
 
 from greptransactions.__main__ import main as greptransactions
@@ -99,7 +99,7 @@ def test_statements2csv_all_files(
 @freezegun.freeze_time(datetime.datetime(2022, 4, 20))
 def test_greptransactions_default_year(
     all_pdfs_input: list[str] | None,
-    capfd: pytest.CaptureFixture,
+    capfd: pytest.CaptureFixture[str],
     secret_snapshot: SnapshotAssertion,
 ) -> None:
     """Test the `greptransactions` command.

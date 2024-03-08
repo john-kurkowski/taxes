@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-import camelot  # type: ignore[import]
+import camelot  # type: ignore[import-untyped]
 import pytest
 
 from statements2csv.extract import extract_dataframes

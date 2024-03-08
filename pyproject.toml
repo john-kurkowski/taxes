@@ -29,11 +29,7 @@ statements2csv = "statements2csv.__main__:main"
 gt = "greptransactions.__main__:main"
 
 [tool.mypy]
-check_untyped_defs = true
-disallow_incomplete_defs = true
-disallow_untyped_calls = true
-disallow_untyped_defs = true
-show_error_codes = true
+strict = true
 
 [tool.ruff]
 src = ["src", "tests"]
