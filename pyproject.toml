@@ -4,9 +4,9 @@ version = "1.0.0"
 license = { text = "Proprietary" }
 requires-python = ">=3.10"
 dependencies = [
-    "PyPDF2 < 3.0",
-    "camelot-py[all]",
+    "camelot-py",
     "click",
+    "opencv-python",
     "pandas",
 ]
 
