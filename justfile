@@ -2,10 +2,15 @@
 default:
   just --list
 
+pip_install_args := (
+  '--upgrade --editable ".[testing]"' +
+  if env_var_or_default('CI', '') =~ '.+' { ' --system' } else { '' }
+)
+
 # Install/update all dependencies
 bootstrap:
-  pip install --upgrade pip
-  pip install --upgrade --upgrade-strategy eager --editable '.[testing]'
+  pip install --upgrade uv
+  uv pip install {{pip_install_args}}
   pre-commit install
 
 # Run checks/tests in CI
@@ -19,7 +24,7 @@ bootstrap:
 
 # Install package for use in the local system
 @install:
-  pip install .
+  uv pip install .
 
 # Run tests. Options are forwarded to `pytest`.
 [no-exit-message]
