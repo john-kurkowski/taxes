@@ -35,6 +35,8 @@ def all_pdfs_input() -> list[str] | None:
     except UnicodeDecodeError:
         return None
 
+    result.sort()
+
     assert result
     return result
 
@@ -65,7 +67,8 @@ def test_statements2csv_one_file(
         pytest.skip("Can't test encrypted files")
         return
 
-    one_pdfs_input = all_pdfs_input[:1]
+    some_index = 33
+    one_pdfs_input = [all_pdfs_input[some_index]]
 
     result = CliRunner().invoke(statements2csv, one_pdfs_input)
 
