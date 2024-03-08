@@ -5,10 +5,10 @@ default:
 # Install/update all dependencies
 bootstrap:
   pip install --upgrade pip
-  pip install --editable '.[testing]'
+  pip install --upgrade --upgrade-strategy eager --editable '.[testing]'
   pre-commit install
 
-# Run tests in CI
+# Run checks/tests in CI
 @cibuild:
   just check
   just test --snapshot-warn-unused
