@@ -1,10 +1,14 @@
 """CLI for this package."""
 
+from __future__ import annotations
+
+import dataclasses
+import datetime
 import itertools
 import logging
 import multiprocessing
 import os
-import pathlib
+from pathlib import Path
 
 import click
 
@@ -12,18 +16,45 @@ from .extract import extract_dataframes
 from .extractors import Extraction
 
 
-def extract_file(fil: pathlib.Path) -> list[Extraction]:
+@dataclasses.dataclass
+class FileExtraction:
+    """A bank statement file and one of its extracted transaction tables."""
+
+    fil: Path
+    extraction: Extraction
+
+    def __lt__(self, other: FileExtraction) -> bool:
+        """Sort extractions in deterministic, roughly chronological order.
+
+        So e.g. 2018-02 transactions come before 2019-01 transactions.
+
+        Transactions can start on the same day of the month, so break ties
+        using the source filename.
+
+        Transactions aren't sorted within a table, so a few transactions may
+        still be out of order when multiple files are merged into one output.
+        Transactions should _tend_ to be adjacent, month to month.
+        """
+        return self._sort_key < other._sort_key
+
+    @property
+    def _sort_key(self) -> tuple[datetime.date, Path]:
+        return self.extraction.date_start, self.fil.resolve()
+
+
+def extract_file(fil: Path) -> list[FileExtraction]:
     """Convert 1 bank statement PDF to a list of its transaction tables."""
-    dfs = extract_dataframes(fil)
-    result = sorted(dfs, key=lambda extraction: extraction.date_start)
+    result = sorted(
+        FileExtraction(fil, extraction) for extraction in extract_dataframes(fil)
+    )
     if not result:
         logging.warning('File "%s" had nothing to extract', fil)
     return result
 
 
 @click.command()
-@click.argument("files", nargs=-1, required=True, type=pathlib.Path)
-def main(files: list[pathlib.Path]) -> None:
+@click.argument("files", nargs=-1, required=True, type=Path)
+def main(files: list[Path]) -> None:
     """Convert FILES bank statement PDFs to CSV on stdout."""
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "WARNING").upper())
 
@@ -43,15 +74,13 @@ def main(files: list[pathlib.Path]) -> None:
             extractions = pool.map(extract_file, files)
 
     flattened_extractions = itertools.chain.from_iterable(extractions)
-    sorted_extractions = sorted(
-        flattened_extractions, key=lambda extraction: extraction.date_start
-    )
+    sorted_extractions = sorted(flattened_extractions)
 
-    for i, extraction in enumerate(sorted_extractions):
+    for i, fe in enumerate(sorted_extractions):
         is_first = i == 0
         is_last = i >= len(sorted_extractions) - 1
         click.echo(
-            extraction.dataframe.to_csv(header=is_first, index=False), nl=is_last
+            fe.extraction.dataframe.to_csv(header=is_first, index=False), nl=is_last
         )
 
 
