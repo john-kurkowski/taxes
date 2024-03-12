@@ -54,9 +54,7 @@ class Extractor(Protocol):
         )
         dataframe.rename(columns=column_names, inplace=True)
 
-        dataframe["Date"] = [
-            _maybe_date_parse(year, date) for date in dataframe["Date"]
-        ]
+        dataframe["Date"] = _date_column_parse(year, dataframe["Date"])
 
         dataframe.drop(
             index=dataframe.loc[self.unwanted_rows(dataframe)].index,
@@ -280,3 +278,21 @@ def _maybe_date_parse(year: int, text: str) -> datetime.date | None:
         return _date_parse(year, text)
     except dateutil.parser.ParserError:
         return None
+
+
+def _date_column_parse(
+    year: int,
+    column: pandas.Series,  # type: ignore[type-arg]
+) -> list[datetime.date | None]:
+    """Convert a transaction column to column of dates, with the given, explicit year."""
+    raw_dates = [_maybe_date_parse(year, date) for date in column]
+    is_crossing_year_boundary = {date.month for date in raw_dates if date} == {1, 12}
+    if not is_crossing_year_boundary:
+        return raw_dates
+
+    def fix_date_on_year_boundary(date: datetime.date | None) -> datetime.date | None:
+        if date is None or date.month == 1:
+            return date
+        return date.replace(year=year - 1)
+
+    return [fix_date_on_year_boundary(date) for date in raw_dates]
