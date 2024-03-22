@@ -12,6 +12,7 @@ bootstrap:
   pip install --upgrade uv
   uv pip install {{pip_install_args}}
   pre-commit install
+  git-crypt unlock
 
 # Run checks/tests in CI
 @cibuild:
