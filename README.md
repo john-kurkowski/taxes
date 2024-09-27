@@ -2,15 +2,26 @@
 
 ## Prerequisites
 
-* [`just`](https://github.com/casey/just)
-* Python >=3.10
+- [`git-crypt`](https://github.com/AGWA/git-crypt)
+- [`just`](https://github.com/casey/just)
+- Python >=3.10
 
 ## Install
 
-Make the commands listed in the next section available on your system with the following.
+Make the commands listed in the next section available on your system with the
+following.
 
 ```zsh
 just install
+```
+
+### Decrypt
+
+Some test input files in the repo are encrypted for privacy. If you know you
+need them:
+
+```zsh
+git-crypt unlock
 ```
 
 ## Commands
@@ -41,7 +52,11 @@ software.
 
 ### greptransactions (gt)
 
-Grep CSV transactions for the given year and pattern. Example usage:
+Grep CSV transactions for the given year and pattern.
+
+Requires decrypted test input files. See above.
+
+Example usage:
 
 ```sh
 $ gt amazon | head -2
@@ -71,6 +86,9 @@ just bootstrap
 ```sh
 just test
 ```
+
+This skips tests that rely on decrypted files that are still encrypted. See
+above how to decrypt test input files.
 
 Besides tests, checks are run on commit, after installing the pre-commit hook
 above, and on push. You can also run them manually.
