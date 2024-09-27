@@ -8,6 +8,17 @@ from pathlib import Path
 import click
 
 
+def is_encrypted(file: Path) -> bool:
+    """Read the first bit of a file to check for typical signs of encryption."""
+    try:
+        with open(file, encoding="utf-8") as fil:
+            sample_size = 1024 * 1024  # 1MB
+            fil.read(sample_size)
+        return False
+    except UnicodeDecodeError:
+        return True
+
+
 @click.command()
 @click.option(
     "-y",
@@ -34,6 +45,11 @@ def main(year: list[int], pattern: str) -> None:
         / "all"
         / "test_integration.ambr"
     )
+
+    if is_encrypted(file):
+        raise click.ClickException(
+            "Can't grep encrypted transaction data. Decrypt input data first."
+        ) from None
 
     cmd: list[str | Path] = [
         Path(__file__).parent / "greptransactions.sh",

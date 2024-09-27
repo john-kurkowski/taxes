@@ -31,10 +31,11 @@ def all_pdfs_input() -> list[str] | None:
             Path(os.path.dirname(__file__)) / "secrets" / "all_pdfs.lnk",
             encoding="utf-8",
         ) as fil:
-            result = glob.glob(fil.read().strip(), flags=glob.BRACE | glob.GLOBTILDE)
+            glob_str = fil.read()
     except UnicodeDecodeError:
         return None
 
+    result = glob.glob(glob_str.strip(), flags=glob.BRACE | glob.GLOBTILDE)
     result.sort()
 
     assert result
