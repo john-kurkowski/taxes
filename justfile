@@ -2,16 +2,11 @@
 default:
   just --list
 
-pip_install_args := (
-  '--upgrade --editable ".[testing]"' +
-  if env_var_or_default('CI', '') =~ '.+' { ' --system' } else { '' }
-)
-
 # Install/update all dependencies
 bootstrap:
   pip install --upgrade uv
-  uv pip install {{pip_install_args}}
-  pre-commit install
+  uv sync --all-extras
+  uv run pre-commit install
 
 # Run checks/tests in CI
 @cibuild:
@@ -20,13 +15,13 @@ bootstrap:
 
 # Run checks
 @check:
-  pre-commit run --all-files
+  uv run pre-commit run --all-files
 
 # Install package for use in the local system
 @install:
-  uv pip install .
+  uv sync
 
 # Run tests. Options are forwarded to `pytest`.
 [no-exit-message]
 @test *options:
-  PYTHONPATH=. pytest {{options}}
+  PYTHONPATH=. uv run pytest {{options}}
