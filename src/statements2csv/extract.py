@@ -5,7 +5,7 @@ import pathlib
 import re
 from collections.abc import Iterator
 
-import camelot  # type: ignore[import-untyped]
+import camelot
 
 from .extractors import ALL_EXTRACTORS, Extraction
 
@@ -21,7 +21,7 @@ def extract_dataframes(fil: pathlib.Path) -> Iterator[Extraction]:
     """
     year = _parse_year_from_absolute_filepath(fil.resolve())
 
-    tables = camelot.read_pdf(str(fil), pages="all", flavor="stream")
+    tables = camelot.read_pdf(str(fil), pages="all", flavor="stream")  # type: ignore[attr-defined]
     last_extraction = None
     for table in tables:
         matching_extractors = [
