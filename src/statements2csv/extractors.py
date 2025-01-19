@@ -60,6 +60,7 @@ class Extractor(Protocol):
             index=dataframe.loc[self.unwanted_rows(dataframe)].index,
             inplace=True,
         )
+        dataframe.reset_index(drop=True, inplace=True)
 
         return Extraction(dataframe)
 
