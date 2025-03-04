@@ -5,8 +5,7 @@ default:
 # Install/update all dependencies
 bootstrap:
   pip install --upgrade uv
-  uv sync --all-extras
-  uv run pre-commit install
+  uv run --all-extras pre-commit install
 
 # Run checks/tests in CI
 @cibuild:
@@ -15,7 +14,7 @@ bootstrap:
 
 # Run checks
 @check:
-  uv run pre-commit run --all-files
+  uv run --all-extras pre-commit run --all-files
 
 # Install package for use in the local system
 @install:
@@ -24,4 +23,4 @@ bootstrap:
 # Run tests. Options are forwarded to `pytest`.
 [no-exit-message]
 @test *options:
-  PYTHONPATH=. uv run pytest {{options}}
+  PYTHONPATH=. uv run --all-extras pytest {{options}}
