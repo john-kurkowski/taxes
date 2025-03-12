@@ -15,9 +15,13 @@ def test_extract_dataframes_must_contain_one_year(
     monkeypatch.setattr(camelot, "read_pdf", lambda *_, **__: [])
 
     with pytest.raises(ValueError, match="possible statement years"):
-        list(extract_dataframes(Path("years") / "000" / "a.pdf"))
+        list(extract_dataframes("stream", Path("years") / "000" / "a.pdf"))
 
     with pytest.raises(ValueError, match="possible statement years"):
-        list(extract_dataframes(Path("years") / "2020" / "until" / "2029" / "a.pdf"))
+        list(
+            extract_dataframes(
+                "stream", Path("years") / "2020" / "until" / "2029" / "a.pdf"
+            )
+        )
 
-    assert list(extract_dataframes(Path("years") / "2020" / "a.pdf")) == []
+    assert list(extract_dataframes("stream", Path("years") / "2020" / "a.pdf")) == []

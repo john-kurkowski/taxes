@@ -4,6 +4,7 @@ import logging
 import pathlib
 import re
 from collections.abc import Iterator
+from typing import Literal
 
 import camelot
 
@@ -12,7 +13,9 @@ from .extractors import ALL_EXTRACTORS, Extraction
 YEAR_RE = re.compile(r"^\d{4}$")
 
 
-def extract_dataframes(fil: pathlib.Path) -> Iterator[Extraction]:
+def extract_dataframes(
+    flavor: Literal["network", "stream"], fil: pathlib.Path
+) -> Iterator[Extraction]:
     """Parse the given PDF's tables for bank transactions, lazily yielding one table at a time.
 
     Exclude non-transaction tables. For each table, tries all supported banks.
@@ -21,7 +24,7 @@ def extract_dataframes(fil: pathlib.Path) -> Iterator[Extraction]:
     """
     year = _parse_year_from_absolute_filepath(fil.resolve())
 
-    tables = camelot.read_pdf(str(fil), pages="all", flavor="stream")  # type: ignore[attr-defined]
+    tables = camelot.read_pdf(str(fil), pages="all", flavor=flavor)  # type: ignore[attr-defined]
     last_extraction = None
     for table in tables:
         matching_extractors = [
