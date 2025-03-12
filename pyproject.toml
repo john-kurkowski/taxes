@@ -22,6 +22,7 @@ testing = [
     "pre-commit",
     "pytest",
     "pytest-cov",
+    "python-lsp-server",
     "ruff",
     "syrupy",
     "types-python-dateutil",
