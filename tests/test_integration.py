@@ -73,9 +73,9 @@ def test_statements2csv_one_file(
 
     result = CliRunner().invoke(statements2csv, one_pdfs_input)
 
+    assert result.output == secret_snapshot
     assert result.exit_code == 0
     assert result.output
-    assert result.output == secret_snapshot
 
 
 def test_statements2csv_all_files(
@@ -92,9 +92,9 @@ def test_statements2csv_all_files(
 
     result = CliRunner().invoke(statements2csv, all_pdfs_input)
 
+    assert result.output == secret_snapshot_all_pdfs
     assert result.exit_code == 0
     assert result.output
-    assert result.output == secret_snapshot_all_pdfs
 
 
 @freezegun.freeze_time(datetime.datetime(2022, 4, 20))
@@ -124,6 +124,9 @@ def test_greptransactions_default_year(
     )
     output3, err3 = capfd.readouterr()
 
+    assert output1 == secret_snapshot
+    assert output2 == secret_snapshot
+    assert output3 == secret_snapshot
     assert result1.exit_code == 0
     assert result2.exit_code == 0
     assert result3.exit_code == 0
@@ -136,6 +139,3 @@ def test_greptransactions_default_year(
     assert output1 != output2
     assert output1 != output3
     assert output2 != output3
-    assert output1 == secret_snapshot
-    assert output2 == secret_snapshot
-    assert output3 == secret_snapshot
