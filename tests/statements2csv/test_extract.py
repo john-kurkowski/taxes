@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-import camelot
+import camelot.io
 import pytest
 
 from statements2csv.extract import extract_dataframes
@@ -12,7 +12,7 @@ def test_extract_dataframes_must_contain_one_year(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Test input path to `extract_dataframes` must contain one year."""
-    monkeypatch.setattr(camelot, "read_pdf", lambda *_, **__: [])
+    monkeypatch.setattr(camelot.io, "read_pdf", lambda *_, **__: [])
     flavor = None
 
     with pytest.raises(ValueError, match="possible statement years"):

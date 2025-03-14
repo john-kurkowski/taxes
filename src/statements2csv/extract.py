@@ -36,7 +36,7 @@ def extract_dataframes(
         flavors = {flavor: []}
 
     for flavor_choice, flavor_extractions in flavors.items():
-        tables = camelot.read_pdf(str(fil), pages="all", flavor=flavor_choice)  # type: ignore[attr-defined]
+        tables = camelot.io.read_pdf(str(fil), pages="all", flavor=flavor_choice)
         last_extraction: Extraction | None = None
         for table in tables:
             matching_extractors = [
