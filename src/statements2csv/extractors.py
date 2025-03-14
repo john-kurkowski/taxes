@@ -108,10 +108,20 @@ class ExtractorAppleCard(Extractor):
 
     def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
         """Override."""
+        date_header_idx = [val.lower() for val in dataframe[0].values].index("date")
+
+        amount_col_idx = (
+            dataframe.loc[date_header_idx]
+            .loc[
+                # Work around incomplete type stub. It accepts a Callable.
+                cast(Any, lambda x: x == "Amount")
+            ]
+            .index[0]
+        )
         return {
             0: "Date",
             1: "Description",
-            4: "Amount",
+            amount_col_idx: "Amount",
         }
 
 

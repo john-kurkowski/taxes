@@ -8,7 +8,9 @@ import itertools
 import logging
 import multiprocessing
 import os
+from functools import partial
 from pathlib import Path
+from typing import Literal
 
 import click
 
@@ -42,10 +44,14 @@ class FileExtraction:
         return self.extraction.date_start, self.fil.resolve()
 
 
-def extract_file(fil: Path) -> list[FileExtraction]:
+def extract_file(
+    fil: Path,
+    flavor: Literal["network", "stream"] | None,
+) -> list[FileExtraction]:
     """Convert 1 bank statement PDF to a list of its transaction tables."""
     result = sorted(
-        FileExtraction(fil, extraction) for extraction in extract_dataframes(fil)
+        FileExtraction(fil, extraction)
+        for extraction in extract_dataframes(fil, flavor)
     )
     if not result:
         logging.warning('File "%s" had nothing to extract', fil)
@@ -54,14 +60,19 @@ def extract_file(fil: Path) -> list[FileExtraction]:
 
 @click.command()
 @click.argument("files", nargs=-1, required=True, type=Path)
-def main(files: list[Path]) -> None:
+@click.option(
+    "--flavor",
+    help="""Flavor of PDF reader to use. Defaults to whatever is known to work with a given bank statement.""",
+    type=click.Choice(["network", "stream"]),
+)
+def main(files: list[Path], flavor: Literal["network", "stream"] | None) -> None:
     """Convert FILES bank statement PDFs to CSV on stdout."""
     logging.basicConfig(level=os.environ.get("LOGLEVEL", "WARNING").upper())
 
     num_cores_that_hopefully_wont_max_out_machine = multiprocessing.cpu_count() // 2
     do_serially = len(files) <= 1 or num_cores_that_hopefully_wont_max_out_machine <= 1
     if do_serially:
-        extractions = [extract_file(fil) for fil in files]
+        extractions = [extract_file(fil, flavor) for fil in files]
     else:
         # Let through child process logging to stderr. Note on macOS, this line is
         # considered unsafe.
@@ -71,7 +82,7 @@ def main(files: list[Path]) -> None:
         with multiprocessing.Pool(
             num_cores_that_hopefully_wont_max_out_machine
         ) as pool:
-            extractions = pool.map(extract_file, files)
+            extractions = pool.map(partial(extract_file, flavor=flavor), files)
 
     flattened_extractions = itertools.chain.from_iterable(extractions)
     sorted_extractions = sorted(flattened_extractions)
