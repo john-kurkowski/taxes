@@ -13,12 +13,12 @@ import pandas
 class Extraction(NamedTuple):
     """Tabular transaction data for one table from one bank's statement."""
 
-    dataframe: pandas.core.frame.DataFrame
+    df: pandas.core.frame.DataFrame
 
     @property
     def date_start(self) -> datetime.date:
         """The earliest date in the extracted table."""
-        return cast(datetime.date, self.dataframe["Date"].min())
+        return cast(datetime.date, self.df["Date"].min())
 
 
 class Extractor(Protocol):
@@ -31,60 +31,55 @@ class Extractor(Protocol):
     found matching the particular bank, return `None`.
     """
 
-    def __call__(
-        self, year: int, dataframe: pandas.core.frame.DataFrame
-    ) -> Extraction | None:
+    def __call__(self, year: int, df: pandas.core.frame.DataFrame) -> Extraction | None:
         """Override."""
-        if not self.is_match(dataframe):
+        if not self.is_match(df):
             return None
 
-        extraction = self._extract(year, dataframe)
-        if extraction.dataframe.empty:
+        extraction = self._extract(year, df)
+        if extraction.df.empty:
             return None
 
         return extraction
 
-    def _extract(self, year: int, dataframe: pandas.core.frame.DataFrame) -> Extraction:
+    def _extract(self, year: int, df: pandas.core.frame.DataFrame) -> Extraction:
         """Core transaction table extraction steps, shared by all banks."""
-        column_names = self.column_names(dataframe)
+        column_names = self.column_names(df)
 
-        # Copy the dataframe, so further massage can be done in-place.
-        dataframe = dataframe.drop(
-            columns=[col for col in dataframe.columns if col not in column_names],  # type: ignore[comparison-overlap]
+        trimmed_df = df.drop(
+            columns=[col for col in df.columns if col not in column_names],  # type: ignore[comparison-overlap]
         )
-        dataframe.rename(columns=column_names, inplace=True)
+        trimmed_df.rename(columns=column_names, inplace=True)
 
-        dataframe["Date"] = _date_column_parse(year, dataframe["Date"])
+        trimmed_df["Date"] = _date_column_parse(year, trimmed_df["Date"])
 
-        dataframe.drop(
-            index=dataframe.loc[self.unwanted_rows(dataframe)].index,
+        trimmed_df.drop(
+            index=trimmed_df.loc[self.unwanted_rows(trimmed_df)].index,
             inplace=True,
         )
-        dataframe.reset_index(drop=True, inplace=True)
+        trimmed_df.reset_index(drop=True, inplace=True)
 
-        return Extraction(dataframe)
+        return Extraction(trimmed_df)
 
     @abstractmethod
-    def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
+    def is_match(self, df: pandas.core.frame.DataFrame) -> bool:
         """Whether this Extractor can handle the 1 table for its particular bank."""
 
     @abstractmethod
-    def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
+    def column_names(self, df: pandas.core.frame.DataFrame) -> dict[int, str]:
         """Map column integer indexes to human-friendly display names.
 
         There are at least the same 3 columns in every bank transaction PDF:
         Date, Description, and Amount.
         """
 
-    def unwanted_rows(self, dataframe: pandas.core.frame.DataFrame) -> pandas.Series:  # type: ignore[type-arg]
+    def unwanted_rows(self, df: pandas.core.frame.DataFrame) -> pandas.Series:  # type: ignore[type-arg]
         """Select dataframe rows to be dropped, after parsing is complete, before data is returned to the caller.
 
         For example, select rows with invalid dates.
         """
         is_empty_or_a_label = (
-            dataframe["Date"].isnull()
-            | dataframe["Amount"].eq("")
-            | dataframe["Amount"].str.isalpha()
+            df["Date"].isnull() | df["Amount"].eq("") | df["Amount"].str.isalpha()
         )
 
         return is_empty_or_a_label
@@ -97,21 +92,21 @@ class ExtractorAppleCard(Extractor):
     because the statements already include the year.
     """
 
-    def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
+    def is_match(self, df: pandas.core.frame.DataFrame) -> bool:
         """Override."""
 
         def is_row_match(row: pandas.core.series.Series) -> bool:  # type: ignore[type-arg]
             row_texts = {cell_text.lower().strip() for cell_text in row}
             return "date" in row_texts and "daily cash" in row_texts
 
-        return any(is_row_match(dataframe.iloc[row_i]) for row_i in dataframe.index)
+        return any(is_row_match(df.iloc[row_i]) for row_i in df.index)
 
-    def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
+    def column_names(self, df: pandas.core.frame.DataFrame) -> dict[int, str]:
         """Override."""
-        date_header_idx = [val.lower() for val in dataframe[0].values].index("date")
+        date_header_idx = [val.lower() for val in df[0].values].index("date")
 
         amount_col_idx = (
-            dataframe.loc[date_header_idx]
+            df.loc[date_header_idx]
             .loc[
                 # Work around incomplete type stub. It accepts a Callable.
                 cast(Any, lambda x: x == "Amount")
@@ -133,18 +128,18 @@ class ExtractorBankOfAmerica(Extractor):
     arrival time. Drop these extra rows.
     """
 
-    def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
+    def is_match(self, df: pandas.core.frame.DataFrame) -> bool:
         """Override."""
 
         def is_row_match(row_i: int) -> bool:
             try:
-                return dataframe.iat[row_i, 0] == dataframe.iat[row_i, 1] == "Date"  # type: ignore[no-any-return]
+                return df.iat[row_i, 0] == df.iat[row_i, 1] == "Date"  # type: ignore[no-any-return]
             except IndexError:
                 return False
 
-        return any(is_row_match(row_i) for row_i in dataframe.index)
+        return any(is_row_match(row_i) for row_i in df.index)
 
-    def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
+    def column_names(self, df: pandas.core.frame.DataFrame) -> dict[int, str]:
         """Override."""
         return {
             0: "Date",
@@ -161,16 +156,12 @@ class ExtractorCapitalOne(Extractor):
     variable, in the last 2 columns.
     """
 
-    def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
+    def is_match(self, df: pandas.core.frame.DataFrame) -> bool:
         """Override."""
         try:
-            maybe_dates = [val.lower() for val in dataframe[0].values]
-            maybe_amounts = [
-                val.lower() for val in dataframe[dataframe.columns[-2]].values
-            ]
-            maybe_balances = [
-                val.lower() for val in dataframe[dataframe.columns[-1]].values
-            ]
+            maybe_dates = [val.lower() for val in df[0].values]
+            maybe_amounts = [val.lower() for val in df[df.columns[-2]].values]
+            maybe_balances = [val.lower() for val in df[df.columns[-1]].values]
         except IndexError:
             return False
 
@@ -180,12 +171,12 @@ class ExtractorCapitalOne(Extractor):
             and "balance" in maybe_balances
         )
 
-    def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
+    def column_names(self, df: pandas.core.frame.DataFrame) -> dict[int, str]:
         """Override."""
-        date_header_idx = [val.lower() for val in dataframe[0].values].index("date")
+        date_header_idx = [val.lower() for val in df[0].values].index("date")
 
         amount_col_idx = (
-            dataframe.loc[date_header_idx]
+            df.loc[date_header_idx]
             .loc[
                 # Work around incomplete type stub. It accepts a Callable.
                 cast(Any, lambda x: x == "AMOUNT")
@@ -209,11 +200,11 @@ class ExtractorChase(Extractor):
         r"\s+".join(("Merchant", "Name", "or", "Transaction", "Description"))
     )
 
-    def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
+    def is_match(self, df: pandas.core.frame.DataFrame) -> bool:
         """Override."""
-        return bool(self.IS_MATCH_RE.search(dataframe.to_string()))
+        return bool(self.IS_MATCH_RE.search(df.to_string()))
 
-    def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
+    def column_names(self, df: pandas.core.frame.DataFrame) -> dict[int, str]:
         """Override."""
         return {
             0: "Date",
@@ -228,21 +219,17 @@ class ExtractorWellsFargo(Extractor):
     They have separate columns for additions and subtractions.
     """
 
-    def is_match(self, dataframe: pandas.core.frame.DataFrame) -> bool:
+    def is_match(self, df: pandas.core.frame.DataFrame) -> bool:
         """Override."""
         try:
-            maybe_additions = [
-                val.lower() for val in dataframe[dataframe.columns[-3]].values
-            ]
-            maybe_subtractions = [
-                val.lower() for val in dataframe[dataframe.columns[-2]].values
-            ]
+            maybe_additions = [val.lower() for val in df[df.columns[-3]].values]
+            maybe_subtractions = [val.lower() for val in df[df.columns[-2]].values]
         except IndexError:
             return False
 
         return "additions" in maybe_additions and "subtractions" in maybe_subtractions
 
-    def column_names(self, dataframe: pandas.core.frame.DataFrame) -> dict[int, str]:
+    def column_names(self, df: pandas.core.frame.DataFrame) -> dict[int, str]:
         """Override."""
         return {
             0: "Date",

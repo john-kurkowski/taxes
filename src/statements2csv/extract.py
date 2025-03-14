@@ -54,8 +54,8 @@ def extract_dataframes(
                 )
 
             extractor, extraction = matching_extractors[0]
-            is_duplicate_extraction = last_extraction and extraction.dataframe.equals(
-                last_extraction.dataframe
+            is_duplicate_extraction = last_extraction and extraction.df.equals(
+                last_extraction.df
             )
             if is_duplicate_extraction:
                 logging.info(
@@ -85,4 +85,4 @@ def _parse_year_from_absolute_filepath(fil: pathlib.Path) -> int:
 
 
 def _sum_extracted_transactions(extractions: list[Extraction]) -> int:
-    return sum(len(extraction.dataframe) for extraction in extractions)
+    return sum(len(extraction.df) for extraction in extractions)

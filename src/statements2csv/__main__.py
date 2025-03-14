@@ -87,11 +87,12 @@ def main(files: list[Path], flavor: Literal["network", "stream"] | None) -> None
     flattened_extractions = itertools.chain.from_iterable(extractions)
     sorted_extractions = sorted(flattened_extractions)
 
-    for i, fe in enumerate(sorted_extractions):
+    for i, flattened_extraction in enumerate(sorted_extractions):
         is_first = i == 0
         is_last = i >= len(sorted_extractions) - 1
         click.echo(
-            fe.extraction.dataframe.to_csv(header=is_first, index=False), nl=is_last
+            flattened_extraction.extraction.df.to_csv(header=is_first, index=False),
+            nl=is_last,
         )
 
 
