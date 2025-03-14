@@ -36,7 +36,7 @@ def main(year: list[int], pattern: str) -> None:
     `statements2csv`, across all bank statements.
 
     This is a thin wrapper around some Bash commands piping in and out of
-    Ripgrep.
+    ripgrep.
     """
     file = (
         Path(__file__).parent.parent.parent

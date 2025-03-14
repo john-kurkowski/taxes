@@ -64,8 +64,6 @@ Grep CSV transactions for the given year and pattern.
 
 Defaults to including only transactions from the previous calendar year.
 
-Requires decrypted test input files. See above.
-
 Example usage:
 
 ```sh
@@ -77,6 +75,12 @@ $ gt --year 2021 amazon | head -2
 2021-01-21,Amazon.com*T17O517I3 Amzn.com/bill WA,35.15
 2021-03-03,Amazon.com*LJ4J51LF3 Amzn.com/bill WA,3.68
 ```
+
+Additional requirements:
+
+- Decrypted test input files. See above.
+- [`ripgrep`](https://github.com/BurntSushi/ripgrep)
+- [`xsv`](https://github.com/BurntSushi/xsv)
 
 ## Contribute
 
