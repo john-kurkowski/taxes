@@ -1,5 +1,7 @@
 # taxes
 
+Tasks for filing my taxes.
+
 ## Prerequisites
 
 - [`git-crypt`](https://github.com/AGWA/git-crypt)
@@ -29,7 +31,9 @@ git-crypt unlock
 ### statements2csv
 
 Convert bank statement PDFs from the banks I use, listed as arguments, to plain
-text CSV on stdout. Example usage:
+text CSV on stdout.
+
+Example usage:
 
 ```zsh
 $ statements2csv input1.pdf input2.pdf
@@ -41,18 +45,24 @@ Date,Description,Amount
 Run `statements2csv --help` for more details. You can get a little more
 debugging info by reducing the env var `LOGLEVEL`, which defaults to `WARNING`.
 
+```zsh
+$ LOGLEVEL=INFO statements2csv input1.pdf input2.pdf
+```
+
 #### Motivation
 
-My banks' official transaction search UIs suck. Mint stopped aggregating all my
-bank transactions; its search was slow, besides. I save all my digital
-statements anyway, for tax purposes. I figured, I can use fast grep on the
-locally synced PDFs (like `greptransactions`, below), instead of the official
-UIs. I can pipe to other Unix commands. I can copy and paste to my spreadsheet
-software.
+My banks' official transaction search UIs suck. I used to aggregate all my banks
+with Mint, which started to lose data, and was shut down. Its search was slow,
+besides. I save all my PDF statements anyway. I figured, I'm more comfortable in
+the terminal. I can use fast grep on the locally synced PDFs (like
+`greptransactions`, below), instead of the official UIs. I can pipe to other
+Unix commands. I can copy and paste to my spreadsheet software.
 
 ### greptransactions (gt)
 
 Grep CSV transactions for the given year and pattern.
+
+Defaults to including only transactions from the previous calendar year.
 
 Requires decrypted test input files. See above.
 
@@ -67,11 +77,6 @@ $ gt --year 2021 amazon | head -2
 2021-01-21,Amazon.com*T17O517I3 Amzn.com/bill WA,35.15
 2021-03-03,Amazon.com*LJ4J51LF3 Amzn.com/bill WA,3.68
 ```
-
-Executes the given regex pattern against a pre-existing snapshot of
-`statements2csv`, across all bank statements. A thin wrapper around Ripgrep,
-this command basically just makes the grep command easier to type. Defaults to
-transactions from the previous calendar year, if year not provided.
 
 ## Contribute
 

@@ -24,6 +24,7 @@ def is_encrypted(file: Path) -> bool:
     "-y",
     "--year",
     default=lambda: [datetime.date.today().year - 1],
+    help="""Include transactions from the given year(s). Defaults to the previous calendar year.""",
     multiple=True,
     type=int,
 )
@@ -34,11 +35,8 @@ def main(year: list[int], pattern: str) -> None:
     Executes the given regex pattern against a pre-existing snapshot of
     `statements2csv`, across all bank statements.
 
-    Defaults to transactions from the previous calendar year, if year(s) not
-    provided.
-
-    A thin wrapper around some Bash commands piping in and out of Ripgrep. This
-    command basically just makes the grep easier to type.
+    This is a thin wrapper around some Bash commands piping in and out of
+    Ripgrep.
     """
     file = (
         Path(__file__).parent.parent.parent
