@@ -27,13 +27,7 @@ def extract_dataframes(
     """
     year = _parse_year_from_absolute_filepath(fil.resolve())
 
-    flavors: dict[Literal["network", "stream"], list[Extraction]]
-    if flavor is None and "Apple" in str(fil.resolve()):
-        flavors = {"network": [], "stream": []}
-    elif flavor is None:
-        flavors = {"stream": []}
-    else:
-        flavors = {flavor: []}
+    flavors = _flavors_to_try(fil, flavor)
 
     for flavor_choice, flavor_extractions in flavors.items():
         tables = camelot.io.read_pdf(str(fil), pages="all", flavor=flavor_choice)
@@ -69,6 +63,17 @@ def extract_dataframes(
 
     winning_extractions = max(flavors.values(), key=_sum_extracted_transactions)
     yield from winning_extractions
+
+
+def _flavors_to_try(
+    fil: pathlib.Path, flavor: Literal["network", "stream"] | None
+) -> dict[Literal["network", "stream"], list[Extraction]]:
+    if flavor is None and "Apple" in str(fil.resolve()):
+        return {"network": [], "stream": []}
+    elif flavor is None:
+        return {"stream": []}
+    else:
+        return {flavor: []}
 
 
 def _parse_year_from_absolute_filepath(fil: pathlib.Path) -> int:
