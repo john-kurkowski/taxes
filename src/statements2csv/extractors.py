@@ -10,6 +10,10 @@ import dateutil.parser
 import pandas
 
 
+class ExtractionValidationError(ValueError):
+    """Extracted table data had unexpected values."""
+
+
 class Extraction(NamedTuple):
     """Tabular transaction data for one table from one bank's statement."""
 
@@ -49,6 +53,10 @@ class Extractor(Protocol):
         trimmed_df = df.drop(
             columns=[col for col in df.columns if col not in column_names],  # type: ignore[comparison-overlap]
         )
+        if len(column_names) != len(trimmed_df.columns):
+            raise ExtractionValidationError(
+                f"Expected {len(column_names)} columns, actual {len(trimmed_df.columns)}"
+            )
         trimmed_df.rename(columns=column_names, inplace=True)
 
         trimmed_df["Date"] = _date_column_parse(year, trimmed_df["Date"])

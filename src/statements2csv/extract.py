@@ -8,7 +8,7 @@ from typing import Literal
 
 import camelot
 
-from .extractors import ALL_EXTRACTORS, Extraction
+from .extractors import ALL_EXTRACTORS, Extraction, ExtractionValidationError
 
 YEAR_RE = re.compile(r"^\d{4}$")
 
@@ -20,24 +20,33 @@ def extract_dataframes(
 
     Exclude non-transaction tables. For each table, tries all supported banks.
     The first bank that yields a result yields from this function. If no banks
-    match, the table is skipped.
-
-    If no flavor given, tries whatever flavors are known to work best with the
-    given bank statement, yielding from the flavor with the most transactions.
+    match, the table is skipped. If banks match but all flavors fail
+    validation, an `ExtractionValidationError` is reraised; the PDF's schema is
+    unexpected. Tries whatever flavors are known to work best with the given
+    bank statement, yielding from the flavor with the most transactions, if no
+    flavor is given.
     """
     year = _parse_year_from_absolute_filepath(fil.resolve())
 
     flavors = _flavors_to_try(fil, flavor)
 
+    validation_errors = []
+
     for flavor_choice, flavor_extractions in flavors.items():
         tables = camelot.io.read_pdf(str(fil), pages="all", flavor=flavor_choice)
         last_extraction: Extraction | None = None
         for table in tables:
-            matching_extractors = [
-                (extractor, next_extraction)
-                for extractor in ALL_EXTRACTORS
-                if (next_extraction := extractor(year, table.df))
-            ]
+            matching_extractors = []
+            for extractor in ALL_EXTRACTORS:
+                try:
+                    next_extraction = extractor(year, table.df)
+                except ExtractionValidationError as eve:
+                    logging.info('Extractor "%s" failed validation: %s', extractor, eve)
+                    validation_errors.append(eve)
+
+                if next_extraction:
+                    matching_extractors.append((extractor, next_extraction))
+
             if not matching_extractors:
                 continue
             elif len(matching_extractors) > 1:
@@ -60,6 +69,11 @@ def extract_dataframes(
             last_extraction = extraction
             logging.info('Extractor "%s" found something', extractor)
             flavor_extractions.append(extraction)
+
+    if validation_errors and not any(flavors.values()):
+        raise ValueError(
+            f"No extractors found valid data in file {fil}"
+        ) from validation_errors[0]
 
     winning_extractions = max(flavors.values(), key=_sum_extracted_transactions)
     yield from winning_extractions
