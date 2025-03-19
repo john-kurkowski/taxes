@@ -8,7 +8,7 @@ from typing import Literal
 
 import camelot
 
-from .extractors import ALL_EXTRACTORS, Extraction, ExtractionValidationError
+from .extractors import ALL_EXTRACTORS, Extraction, ExtractionValidationError, Extractor
 
 YEAR_RE = re.compile(r"^\d{4}$")
 
@@ -35,29 +35,12 @@ def extract_dataframes(
     for flavor_choice, flavor_extractions in flavors.items():
         tables = camelot.io.read_pdf(str(fil), pages="all", flavor=flavor_choice)
         for table in tables:
-            matching_extractors = []
-            for extractor in ALL_EXTRACTORS:
-                next_extraction = None
-                try:
-                    next_extraction = extractor(year, table.df)
-                except ExtractionValidationError as eve:
-                    logging.info('Extractor "%s" failed validation: %s', extractor, eve)
-                    validation_errors.append(eve)
-
-                if next_extraction:
-                    matching_extractors.append((extractor, next_extraction))
-
-            if not matching_extractors:
+            maybe_extraction, errs = _extract_table(fil, year, table)
+            validation_errors.extend(errs)
+            if not maybe_extraction:
                 continue
-            elif len(matching_extractors) > 1:
-                logging.warning(
-                    'Multiple extractors matched file "%s": "%s"',
-                    fil,
-                    [extractor for (extractor, _) in matching_extractors],
-                )
 
-            extractor, extraction = matching_extractors[0]
-
+            extractor, extraction = maybe_extraction
             if flavor_extractions and _is_duplicate_extraction(
                 flavor_extractions[-1], extraction
             ):
@@ -78,6 +61,38 @@ def extract_dataframes(
 
     winning_extractions = max(flavors.values(), key=_sum_extracted_transactions)
     yield from winning_extractions
+
+
+def _extract_table(
+    fil: pathlib.Path,
+    year: int,
+    table: camelot.core.Table,  # pyright: ignore[reportAttributeAccessIssue]
+) -> tuple[tuple[Extractor, Extraction] | None, list[ExtractionValidationError]]:
+    """Try all extractors on the given table, returning the first successful one and its result, if any.
+
+    Also returns all accumulated errors.
+    """
+    matching = []
+    errors = []
+    for extractor in ALL_EXTRACTORS:
+        next_extraction = None
+        try:
+            next_extraction = extractor(year, table.df)
+        except ExtractionValidationError as eve:
+            logging.info('Extractor "%s" failed validation: %s', extractor, eve)
+            errors.append(eve)
+
+        if next_extraction:
+            matching.append((extractor, next_extraction))
+
+    if len(matching) > 1:
+        logging.warning(
+            'Multiple extractors matched file "%s": "%s"',
+            fil,
+            [extractor for (extractor, _) in matching],
+        )
+
+    return matching[0] if matching else None, errors
 
 
 def _flavors_to_try(
