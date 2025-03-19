@@ -38,6 +38,7 @@ def extract_dataframes(
         for table in tables:
             matching_extractors = []
             for extractor in ALL_EXTRACTORS:
+                next_extraction = None
                 try:
                     next_extraction = extractor(year, table.df)
                 except ExtractionValidationError as eve:

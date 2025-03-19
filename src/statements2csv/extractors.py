@@ -17,7 +17,7 @@ class ExtractionValidationError(ValueError):
 class Extraction(NamedTuple):
     """Tabular transaction data for one table from one bank's statement."""
 
-    df: pandas.core.frame.DataFrame
+    df: pandas.DataFrame
 
     @property
     def date_start(self) -> datetime.date:
@@ -35,7 +35,7 @@ class Extractor(Protocol):
     found matching the particular bank, return `None`.
     """
 
-    def __call__(self, year: int, df: pandas.core.frame.DataFrame) -> Extraction | None:
+    def __call__(self, year: int, df: pandas.DataFrame) -> Extraction | None:
         """Override."""
         if not self.is_match(df):
             return None
@@ -46,7 +46,7 @@ class Extractor(Protocol):
 
         return extraction
 
-    def _extract(self, year: int, df: pandas.core.frame.DataFrame) -> Extraction:
+    def _extract(self, year: int, df: pandas.DataFrame) -> Extraction:
         """Core transaction table extraction steps, shared by all banks."""
         column_names = self.column_names(df)
 
@@ -70,18 +70,18 @@ class Extractor(Protocol):
         return Extraction(trimmed_df)
 
     @abstractmethod
-    def is_match(self, df: pandas.core.frame.DataFrame) -> bool:
+    def is_match(self, df: pandas.DataFrame) -> bool:
         """Whether this Extractor can handle the 1 table for its particular bank."""
 
     @abstractmethod
-    def column_names(self, df: pandas.core.frame.DataFrame) -> dict[int, str]:
+    def column_names(self, df: pandas.DataFrame) -> dict[int, str]:
         """Map column integer indexes to human-friendly display names.
 
         There are at least the same 3 columns in every bank transaction PDF:
         Date, Description, and Amount.
         """
 
-    def unwanted_rows(self, df: pandas.core.frame.DataFrame) -> pandas.Series:  # type: ignore[type-arg]
+    def unwanted_rows(self, df: pandas.DataFrame) -> pandas.Series:  # type: ignore[type-arg]
         """Select dataframe rows to be dropped, after parsing is complete, before data is returned to the caller.
 
         For example, select rows with invalid dates.
@@ -100,7 +100,7 @@ class ExtractorAppleCard(Extractor):
     because the statements already include the year.
     """
 
-    def is_match(self, df: pandas.core.frame.DataFrame) -> bool:
+    def is_match(self, df: pandas.DataFrame) -> bool:
         """Override."""
 
         def is_row_match(row: pandas.core.series.Series) -> bool:  # type: ignore[type-arg]
@@ -109,7 +109,7 @@ class ExtractorAppleCard(Extractor):
 
         return any(is_row_match(df.iloc[row_i]) for row_i in df.index)
 
-    def column_names(self, df: pandas.core.frame.DataFrame) -> dict[int, str]:
+    def column_names(self, df: pandas.DataFrame) -> dict[int, str]:
         """Override."""
         date_header_idx = [val.lower() for val in df[0].values].index("date")
 
@@ -136,7 +136,7 @@ class ExtractorBankOfAmerica(Extractor):
     arrival time. Drop these extra rows.
     """
 
-    def is_match(self, df: pandas.core.frame.DataFrame) -> bool:
+    def is_match(self, df: pandas.DataFrame) -> bool:
         """Override."""
 
         def is_row_match(row_i: int) -> bool:
@@ -147,7 +147,7 @@ class ExtractorBankOfAmerica(Extractor):
 
         return any(is_row_match(row_i) for row_i in df.index)
 
-    def column_names(self, df: pandas.core.frame.DataFrame) -> dict[int, str]:
+    def column_names(self, df: pandas.DataFrame) -> dict[int, str]:
         """Override."""
         return {
             0: "Date",
@@ -164,7 +164,7 @@ class ExtractorCapitalOne(Extractor):
     variable, in the last 2 columns.
     """
 
-    def is_match(self, df: pandas.core.frame.DataFrame) -> bool:
+    def is_match(self, df: pandas.DataFrame) -> bool:
         """Override."""
         try:
             maybe_dates = [val.lower() for val in df[0].values]
@@ -179,7 +179,7 @@ class ExtractorCapitalOne(Extractor):
             and "balance" in maybe_balances
         )
 
-    def column_names(self, df: pandas.core.frame.DataFrame) -> dict[int, str]:
+    def column_names(self, df: pandas.DataFrame) -> dict[int, str]:
         """Override."""
         date_header_idx = [val.lower() for val in df[0].values].index("date")
 
@@ -208,11 +208,11 @@ class ExtractorChase(Extractor):
         r"\s+".join(("Merchant", "Name", "or", "Transaction", "Description"))
     )
 
-    def is_match(self, df: pandas.core.frame.DataFrame) -> bool:
+    def is_match(self, df: pandas.DataFrame) -> bool:
         """Override."""
         return bool(self.IS_MATCH_RE.search(df.to_string()))
 
-    def column_names(self, df: pandas.core.frame.DataFrame) -> dict[int, str]:
+    def column_names(self, df: pandas.DataFrame) -> dict[int, str]:
         """Override."""
         return {
             0: "Date",
@@ -227,7 +227,7 @@ class ExtractorWellsFargo(Extractor):
     They have separate columns for additions and subtractions.
     """
 
-    def is_match(self, df: pandas.core.frame.DataFrame) -> bool:
+    def is_match(self, df: pandas.DataFrame) -> bool:
         """Override."""
         try:
             maybe_additions = [val.lower() for val in df[df.columns[-3]].values]
@@ -237,7 +237,7 @@ class ExtractorWellsFargo(Extractor):
 
         return "additions" in maybe_additions and "subtractions" in maybe_subtractions
 
-    def column_names(self, df: pandas.core.frame.DataFrame) -> dict[int, str]:
+    def column_names(self, df: pandas.DataFrame) -> dict[int, str]:
         """Override."""
         return {
             0: "Date",
