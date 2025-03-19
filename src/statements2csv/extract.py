@@ -82,12 +82,14 @@ def extract_dataframes(
 def _flavors_to_try(
     fil: pathlib.Path, flavor: Literal["network", "stream"] | None
 ) -> dict[Literal["network", "stream"], list[Extraction]]:
-    if flavor is None and "Apple" in str(fil.resolve()):
-        return {"network": [], "stream": []}
-    elif flavor is None:
-        return {"stream": []}
-    else:
+    if flavor is not None:
         return {flavor: []}
+
+    filepath = str(fil.resolve())
+    if any(part in filepath for part in ("Apple", "Chase")):
+        return {"network": [], "stream": []}
+
+    return {"stream": []}
 
 
 def _parse_year_from_absolute_filepath(fil: pathlib.Path) -> int:
