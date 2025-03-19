@@ -34,7 +34,6 @@ def extract_dataframes(
 
     for flavor_choice, flavor_extractions in flavors.items():
         tables = camelot.io.read_pdf(str(fil), pages="all", flavor=flavor_choice)
-        last_extraction: Extraction | None = None
         for table in tables:
             matching_extractors = []
             for extractor in ALL_EXTRACTORS:
@@ -58,17 +57,18 @@ def extract_dataframes(
                 )
 
             extractor, extraction = matching_extractors[0]
-            is_duplicate_extraction = last_extraction and extraction.df.equals(
-                last_extraction.df
-            )
-            if is_duplicate_extraction:
-                logging.info(
-                    'Extractor "%s" found duplicate table. Skipping', extractor
-                )
-                continue
 
-            last_extraction = extraction
-            logging.info('Extractor "%s" found something', extractor)
+            if flavor_extractions and _is_duplicate_extraction(
+                flavor_extractions[-1], extraction
+            ):
+                logging.info(
+                    'Extractor "%s" found duplicate table. Preferring newer table',
+                    extractor,
+                )
+                flavor_extractions.pop()
+            else:
+                logging.info('Extractor "%s" found something', extractor)
+
             flavor_extractions.append(extraction)
 
     if validation_errors and not any(flavors.values()):
@@ -91,6 +91,15 @@ def _flavors_to_try(
         return {"network": [], "stream": []}
 
     return {"stream": []}
+
+
+def _is_duplicate_extraction(prev: Extraction, _next: Extraction) -> bool:
+    """Check if the previous extraction is an exact duplicate or strict subset of the new one."""
+    if prev.df.equals(_next.df):
+        return True
+
+    subset = prev.df.merge(_next.df, how="inner")
+    return subset.equals(prev.df)
 
 
 def _parse_year_from_absolute_filepath(fil: pathlib.Path) -> int:
