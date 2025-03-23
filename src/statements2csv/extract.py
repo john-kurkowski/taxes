@@ -28,31 +28,14 @@ def extract_dataframes(
     """
     year = _parse_year_from_absolute_filepath(fil.resolve())
 
-    flavors = _flavors_to_try(fil, flavor)
+    validation_errors: list[ExtractionValidationError] = []
 
-    validation_errors = []
-
-    for flavor_choice, flavor_extractions in flavors.items():
-        tables = camelot.io.read_pdf(str(fil), pages="all", flavor=flavor_choice)
-        for table in tables:
-            maybe_extraction, errs = _extract_table(fil, year, table)
-            validation_errors.extend(errs)
-            if not maybe_extraction:
-                continue
-
-            extractor, extraction = maybe_extraction
-            if flavor_extractions and _is_duplicate_extraction(
-                flavor_extractions[-1], extraction
-            ):
-                logging.info(
-                    'Extractor "%s" found duplicate table. Preferring newer table',
-                    extractor,
-                )
-                flavor_extractions.pop()
-            else:
-                logging.info('Extractor "%s" found something', extractor)
-
-            flavor_extractions.append(extraction)
+    flavors = {
+        flavor_choice: _extract_tables_for_flavor(
+            fil, year, flavor_choice, validation_errors
+        )
+        for flavor_choice in _flavors_to_try(fil, flavor)
+    }
 
     if validation_errors and not any(flavors.values()):
         raise ValueError(
@@ -61,6 +44,38 @@ def extract_dataframes(
 
     winning_extractions = max(flavors.values(), key=_sum_extracted_transactions)
     yield from winning_extractions
+
+
+def _extract_tables_for_flavor(
+    fil: pathlib.Path,
+    year: int,
+    flavor: Literal["network", "stream"],
+    validation_errors: list[ExtractionValidationError],
+) -> list[Extraction]:
+    """Process all tables for a given flavor."""
+    tables = camelot.io.read_pdf(str(fil), pages="all", flavor=flavor)
+    extractions: list[Extraction] = []
+
+    for table in tables:
+        maybe_extraction, errs = _extract_table(fil, year, table)
+        validation_errors.extend(errs)
+
+        if not maybe_extraction:
+            continue
+
+        extractor, extraction = maybe_extraction
+        if extractions and _is_duplicate_extraction(extractions[-1], extraction):
+            logging.info(
+                'Extractor "%s" found duplicate table. Preferring newer table',
+                extractor,
+            )
+            extractions.pop()
+        else:
+            logging.info('Extractor "%s" found something', extractor)
+
+        extractions.append(extraction)
+
+    return extractions
 
 
 def _extract_table(
