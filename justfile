@@ -23,4 +23,4 @@ bootstrap:
 # Run tests. Options are forwarded to `pytest`.
 [no-exit-message]
 @test *options:
-  PYTHONPATH=. uv run --all-extras pytest {{options}}
+  uv run --all-extras pytest {{options}}
