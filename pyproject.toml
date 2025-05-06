@@ -19,7 +19,6 @@ dependencies = [
     "click",
     "opencv-python",
     "pandas",
-    "pyright",
 ]
 
 [project.optional-dependencies]
@@ -28,6 +27,7 @@ testing = [
     "mypy",
     "pandas-stubs",
     "pre-commit",
+    "pyright",
     "pytest",
     "pytest-cov",
     "python-lsp-server",
