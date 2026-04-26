@@ -81,7 +81,7 @@ class Extractor(Protocol):
         Date, Description, and Amount.
         """
 
-    def unwanted_rows(self, df: pandas.DataFrame) -> pandas.Series:  # type: ignore[type-arg]
+    def unwanted_rows(self, df: pandas.DataFrame) -> pandas.Series:
         """Select dataframe rows to be dropped, after parsing is complete, before data is returned to the caller.
 
         For example, select rows with invalid dates.
@@ -103,7 +103,7 @@ class ExtractorAppleCard(Extractor):
     def is_match(self, df: pandas.DataFrame) -> bool:
         """Override."""
 
-        def is_row_match(row: pandas.core.series.Series) -> bool:  # type: ignore[type-arg]
+        def is_row_match(row: pandas.Series) -> bool:
             row_texts = {cell_text.lower().strip() for cell_text in row}
             return "date" in row_texts and "daily cash" in row_texts
 
@@ -141,7 +141,7 @@ class ExtractorBankOfAmerica(Extractor):
 
         def is_row_match(row_i: int) -> bool:
             try:
-                return df.iat[row_i, 0] == df.iat[row_i, 1] == "Date"  # type: ignore[no-any-return]
+                return df.iat[row_i, 0] == df.iat[row_i, 1] == "Date"
             except IndexError:
                 return False
 
@@ -288,7 +288,7 @@ def _maybe_date_parse(year: int, text: str) -> datetime.date | None:
 
 def _date_column_parse(
     year: int,
-    column: pandas.Series,  # type: ignore[type-arg]
+    column: pandas.Series,
 ) -> list[datetime.date | None]:
     """Convert a transaction column to column of dates, with the given, explicit year."""
     raw_dates = [_maybe_date_parse(year, date) for date in column]
