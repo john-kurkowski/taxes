@@ -7,6 +7,7 @@ from collections.abc import Iterator
 from typing import Literal
 
 import camelot
+from camelot.core import Table
 
 from .extractors import ALL_EXTRACTORS, Extraction, ExtractionValidationError, Extractor
 
@@ -81,7 +82,7 @@ def _extract_tables_for_flavor(
 def _extract_table(
     fil: pathlib.Path,
     year: int,
-    table: camelot.core.Table,  # pyright: ignore[reportAttributeAccessIssue]
+    table: Table,
 ) -> tuple[tuple[Extractor, Extraction] | None, list[ExtractionValidationError]]:
     """Try all extractors on the given table, returning the first successful one and its result, if any.
 
