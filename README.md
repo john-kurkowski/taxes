@@ -103,9 +103,14 @@ just test
 This skips tests that rely on decrypted files that are still encrypted. See
 above how to decrypt test input files.
 
-Besides tests, checks are run on commit, after installing the pre-commit hook
-above, and on push. You can also run them manually.
+Besides tests, static checks are run in CI. You can also run them manually.
 
 ```sh
 just check
+```
+
+To apply automatic fixes before running the remaining checks:
+
+```sh
+just check --fix
 ```

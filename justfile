@@ -5,7 +5,7 @@ default:
 # Install/update all dependencies
 bootstrap:
   pip install --upgrade uv
-  uv run --all-extras pre-commit install
+  uv sync --all-extras
 
 # Run checks/tests in CI
 @cibuild:
@@ -13,8 +13,8 @@ bootstrap:
   just test --snapshot-warn-unused
 
 # Run checks
-@check:
-  uv run --all-extras pre-commit run --all-files
+@check *args:
+  uv run --all-extras python scripts/check.py {{args}}
 
 # Install package for use in the local system
 @install:
