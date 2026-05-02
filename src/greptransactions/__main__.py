@@ -7,6 +7,8 @@ from pathlib import Path
 
 import click
 
+from taxes.paths import decrypted_path
+
 
 def is_encrypted(file: Path) -> bool:
     """Read the first bit of a file to check for typical signs of encryption."""
@@ -38,13 +40,12 @@ def main(year: list[int], pattern: str) -> None:
     This is a thin wrapper around some Bash commands piping in and out of
     ripgrep.
     """
-    file = (
-        Path(__file__).parent.parent.parent
-        / "tests"
-        / "__snapshots__"
-        / "secrets"
-        / "all"
-        / "test_integration.ambr"
+    file = decrypted_path(
+        "tests",
+        "__snapshots__",
+        "secrets",
+        "all",
+        "test_integration.ambr",
     )
 
     if is_encrypted(file):

@@ -4,7 +4,6 @@ Keep to a minimum. https://testing.googleblog.com/2015/04/just-say-no-to-more-en
 """
 
 import datetime
-import os.path
 from pathlib import Path
 
 import freezegun
@@ -15,6 +14,7 @@ from wcmatch import glob
 
 from greptransactions.__main__ import main as greptransactions
 from statements2csv.__main__ import main as statements2csv
+from taxes.paths import decrypted_path
 
 from .snapshot_extensions import secrets_directory_extension_factory
 
@@ -28,7 +28,7 @@ def all_pdfs_input() -> list[str] | None:
     """
     try:
         with open(
-            Path(os.path.dirname(__file__)) / "secrets" / "all_pdfs.lnk",
+            decrypted_path("tests", "secrets", "all_pdfs.lnk"),
             encoding="utf-8",
         ) as fil:
             glob_str = fil.read()

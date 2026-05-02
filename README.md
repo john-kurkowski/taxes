@@ -26,6 +26,10 @@ need them:
 git-crypt unlock
 ```
 
+If you work from a checkout that cannot decrypt files directly, set
+`TAXES_DECRYPTED_ROOT` to another checkout where git-crypt files are readable.
+When unset, commands read encrypted files from the current checkout.
+
 ## Commands
 
 ### statements2csv
