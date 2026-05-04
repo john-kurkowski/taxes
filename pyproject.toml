@@ -33,7 +33,7 @@ testing = [
     "ruff",
     "shellcheck-py",
     "syrupy",
-    "ty>=0.0.32",
+    "ty>=0.0.34",
     "types-python-dateutil",
     "wcmatch",
 ]
