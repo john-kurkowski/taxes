@@ -19,6 +19,11 @@ from taxes.paths import decrypted_path
 from .snapshot_extensions import secrets_directory_extension_factory
 
 
+def _amount_value(line: str) -> float:
+    amount = line.rsplit("\t", maxsplit=1)[1]
+    return float(amount.translate(str.maketrans("", "", "$,+ ")))
+
+
 @pytest.fixture
 def all_pdfs_input() -> list[str] | None:
     """List all PDFs used in the tests.
@@ -139,3 +144,36 @@ def test_greptransactions_default_year(
     assert output1 != output2
     assert output1 != output3
     assert output2 != output3
+
+
+def test_greptransactions_sort_amount(
+    all_pdfs_input: list[str] | None,
+    capfd: pytest.CaptureFixture[str],
+) -> None:
+    """Test amount sorting in the `greptransactions` command."""
+    if all_pdfs_input is None:
+        pytest.skip("Can't test encrypted files")
+        return
+
+    pattern = "(output|tulip)"
+    result1 = CliRunner().invoke(
+        greptransactions, ["--year", "2021", "--sort", "amount", pattern]
+    )
+    output1, err1 = capfd.readouterr()
+
+    result2 = CliRunner().invoke(
+        greptransactions,
+        ["--year", "2021", "--sort", "amount", "--reverse", pattern],
+    )
+    output2, err2 = capfd.readouterr()
+
+    amounts1 = [_amount_value(line) for line in output1.splitlines()]
+    amounts2 = [_amount_value(line) for line in output2.splitlines()]
+    assert amounts1 == sorted(amounts1)
+    assert amounts2 == sorted(amounts2, reverse=True)
+    assert result1.exit_code == 0
+    assert result2.exit_code == 0
+    assert not err1
+    assert not err2
+    assert output1
+    assert output2

@@ -4,12 +4,15 @@ import csv
 import datetime
 import subprocess
 import sys
+from decimal import Decimal
 from io import StringIO
 from pathlib import Path
 
 import click
 
 from taxes.paths import decrypted_path
+
+SortOption = str
 
 
 def is_encrypted(file: Path) -> bool:
@@ -23,13 +26,34 @@ def is_encrypted(file: Path) -> bool:
         return True
 
 
-def csv_to_tsv(input_text: str) -> str:
+def parse_amount(amount: str) -> Decimal:
+    """Parse transaction amount text into a sortable decimal value."""
+    return Decimal(amount.translate(str.maketrans("", "", "$,+ ")))
+
+
+def csv_to_tsv(
+    input_text: str,
+    *,
+    sort: SortOption | None = None,
+    reverse: bool = False,
+) -> str:
     """Convert CSV text to tab-delimited text."""
     output = StringIO()
-    reader = csv.reader(input_text.splitlines())
+    rows = list(csv.reader(input_text.splitlines()))
+    sort_keys = {
+        "date": lambda row: row[0],
+        "description": lambda row: row[1],
+        "amount": lambda row: parse_amount(row[2]),
+    }
+    if sort is None:
+        if reverse:
+            rows.reverse()
+    else:
+        rows.sort(key=sort_keys[sort], reverse=reverse)
+
     writer = csv.writer(output, dialect="excel-tab", lineterminator="\n")
 
-    for row in reader:
+    for row in rows:
         writer.writerow(row)
 
     return output.getvalue()
@@ -44,8 +68,24 @@ def csv_to_tsv(input_text: str) -> str:
     multiple=True,
     type=int,
 )
+@click.option(
+    "--sort",
+    "sort_option",
+    type=click.Choice(["date", "description", "amount"]),
+    help="Sort matching transactions by the selected field. Defaults to current date order.",
+)
+@click.option(
+    "--reverse",
+    is_flag=True,
+    help="Reverse the selected sort order.",
+)
 @click.argument("pattern")
-def main(year: list[int], pattern: str) -> None:
+def main(
+    year: list[int],
+    sort_option: SortOption | None,
+    reverse: bool,
+    pattern: str,
+) -> None:
     """Grep CSV transactions for the given year and pattern.
 
     Executes the given regex pattern against a pre-existing snapshot of
@@ -80,7 +120,11 @@ def main(year: list[int], pattern: str) -> None:
         text=True,
     )
 
-    formatted_transactions = csv_to_tsv(year_result.stdout)
+    formatted_transactions = csv_to_tsv(
+        year_result.stdout,
+        sort=sort_option,
+        reverse=reverse,
+    )
 
     pattern_result = subprocess.run(
         ["rg", "--pcre2", f"({pattern})"],
