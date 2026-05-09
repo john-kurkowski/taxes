@@ -91,7 +91,6 @@ Additional requirements:
 
 - Decrypted test input files. See above.
 - [`ripgrep`](https://github.com/BurntSushi/ripgrep)
-- [`xan`](https://github.com/medialab/xan)
 
 ## Contribute
 

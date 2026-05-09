@@ -6,6 +6,9 @@
 year="$1"
 pattern="$2"
 file="$3"
+
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
 rg --no-line-number --no-filename "^\s*($year)-" "$file" | # find leading year
-  xan fmt --out-delimiter "\t" |                           # increase terminal readability, improve paste into Google Sheets
+  python "$script_dir/csv2tsv.py" |                        # increase terminal readability, improve paste into Google Sheets
   rg --pcre2 "($pattern)"                                  # highlight only the user's pattern
