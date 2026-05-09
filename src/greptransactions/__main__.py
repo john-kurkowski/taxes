@@ -1,8 +1,10 @@
 """CLI for this package."""
 
+import csv
 import datetime
 import subprocess
 import sys
+from io import StringIO
 from pathlib import Path
 
 import click
@@ -21,6 +23,18 @@ def is_encrypted(file: Path) -> bool:
         return True
 
 
+def csv_to_tsv(input_text: str) -> str:
+    """Convert CSV text to tab-delimited text."""
+    output = StringIO()
+    reader = csv.reader(input_text.splitlines())
+    writer = csv.writer(output, dialect="excel-tab", lineterminator="\n")
+
+    for row in reader:
+        writer.writerow(row)
+
+    return output.getvalue()
+
+
 @click.command()
 @click.option(
     "-y",
@@ -37,8 +51,7 @@ def main(year: list[int], pattern: str) -> None:
     Executes the given regex pattern against a pre-existing snapshot of
     `statements2csv`, across all bank statements.
 
-    This is a thin wrapper around some Bash commands piping in and out of
-    ripgrep.
+    This pipes transactions through ripgrep so matches are highlighted.
     """
     file = decrypted_path(
         "tests",
@@ -53,15 +66,29 @@ def main(year: list[int], pattern: str) -> None:
             "Can't grep encrypted transaction data. Decrypt input data first."
         ) from None
 
-    cmd: list[str | Path] = [
-        Path(__file__).parent / "greptransactions.sh",
-        "|".join(str(y) for y in year),
-        pattern,
-        file,
-    ]
+    year_pattern = "|".join(str(y) for y in year)
+    year_result = subprocess.run(
+        [
+            "rg",
+            "--no-line-number",
+            "--no-filename",
+            rf"^\s*({year_pattern})-",
+            file,
+        ],
+        check=False,
+        stdout=subprocess.PIPE,
+        text=True,
+    )
 
-    proc = subprocess.run(cmd, text=True)
-    sys.exit(proc.returncode)
+    formatted_transactions = csv_to_tsv(year_result.stdout)
+
+    pattern_result = subprocess.run(
+        ["rg", "--pcre2", f"({pattern})"],
+        check=False,
+        input=formatted_transactions,
+        text=True,
+    )
+    sys.exit(pattern_result.returncode)
 
 
 if __name__ == "__main__":  # pragma: no cover

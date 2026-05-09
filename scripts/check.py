@@ -6,18 +6,8 @@ import argparse
 import subprocess
 import sys
 from collections.abc import Sequence
-from pathlib import Path
 
 PYTHON_TARGETS = ("scripts", "src", "tests")
-IGNORED_SCRIPT_DIRS = {
-    ".git",
-    ".jj",
-    ".mypy_cache",
-    ".pytest_cache",
-    ".ruff_cache",
-    ".venv",
-    "htmlcov",
-}
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -27,11 +17,6 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     commands = _python_commands(fix=args.fix)
-    shell_scripts = _shell_script_paths()
-    if shell_scripts:
-        commands.append(("shellcheck", *map(str, shell_scripts)))
-    else:
-        print("Skipping ShellCheck: no shell scripts found.")
 
     failed = False
     for command in commands:
@@ -56,24 +41,6 @@ def _python_commands(*, fix: bool) -> list[tuple[str, ...]]:
         ("pyright",),
         ("ty", "check"),
     ]
-
-
-def _shell_script_paths() -> list[str]:
-    result = subprocess.run(
-        ("git", "ls-files", "*.sh"),
-        check=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        text=True,
-    )
-    if result.returncode == 0:
-        return sorted(path for path in result.stdout.splitlines() if path)
-
-    return sorted(
-        str(path)
-        for path in Path().glob("**/*.sh")
-        if not IGNORED_SCRIPT_DIRS.intersection(path.parts)
-    )
 
 
 def _print_command(command: Sequence[str]) -> None:

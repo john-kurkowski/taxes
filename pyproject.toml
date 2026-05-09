@@ -36,7 +36,6 @@ testing = [
     "pytest-cov",
     "python-lsp-server",
     "ruff",
-    "shellcheck-py",
     "syrupy",
     "ty>=0.0.32",
     "types-python-dateutil",
