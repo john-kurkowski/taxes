@@ -19,6 +19,7 @@ bootstrap:
 # Install package for use in the local system
 @install:
   uv sync
+  uv tool install --editable .
 
 # Run tests. Options are forwarded to `pytest`.
 [no-exit-message]

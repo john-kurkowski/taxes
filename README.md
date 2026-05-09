@@ -17,6 +17,13 @@ following.
 just install
 ```
 
+If `gt` or `statements2csv` are still unavailable after installation, add uv's
+tool directory to your shell startup files:
+
+```zsh
+uv tool update-shell
+```
+
 ### Decrypt
 
 Some test input files in the repo are encrypted for privacy. If you know you
