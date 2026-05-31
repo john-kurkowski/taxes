@@ -1603,7 +1603,7 @@ requires-dist = [
     { name = "python-lsp-server", marker = "extra == 'testing'" },
     { name = "ruff", marker = "extra == 'testing'" },
     { name = "syrupy", marker = "extra == 'testing'" },
-    { name = "ty", marker = "extra == 'testing'", specifier = ">=0.0.32" },
+    { name = "ty", marker = "extra == 'testing'" },
     { name = "types-python-dateutil", marker = "extra == 'testing'" },
     { name = "wcmatch", marker = "extra == 'testing'" },
 ]
