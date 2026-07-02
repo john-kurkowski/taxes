@@ -15,31 +15,32 @@ classifiers = [
 ]
 
 dependencies = [
-    "camelot-py",
-    "click",
-    "opencv-python",
-    "pandas",
+    "camelot-py>=1.0.9,<2.0.0",
+    "click>=8.4.1,<9.0.0",
+    "opencv-python>=4.13.0.92,<5.0.0",
+    "pandas>=2.3.3,<3.0.0",
 ]
 
 [tool.uv]
+add-bounds = "major"
 override-dependencies = [
-    "pypdf>=6.10.2",
+    "pypdf>=6.10.2,<7.0.0",
 ]
 
 [project.optional-dependencies]
 testing = [
-    "freezegun",
-    "mypy",
-    "pandas-stubs",
-    "pyright",
-    "pytest",
-    "pytest-cov",
-    "python-lsp-server",
-    "ruff",
-    "syrupy",
-    "ty",
-    "types-python-dateutil",
-    "wcmatch",
+    "freezegun>=1.5.5,<2.0.0",
+    "mypy>=2.1.0,<3.0.0",
+    "pandas-stubs>=2.3.3.260113,<3.0.0",
+    "pyright>=1.1.409,<2.0.0",
+    "pytest>=9.0.3,<10.0.0",
+    "pytest-cov>=7.1.0,<8.0.0",
+    "python-lsp-server>=1.14.0,<2.0.0",
+    "ruff>=0.15.15,<1.0.0",
+    "syrupy>=5.3.1,<6.0.0",
+    "ty>=0.0.40,<1.0.0",
+    "types-python-dateutil>=2.9.0.20260518,<3.0.0",
+    "wcmatch>=10.1,<11.0.0",
 ]
 
 [project.scripts]
