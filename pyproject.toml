@@ -39,7 +39,7 @@ testing = [
     "ruff>=0.15.15,<1.0.0",
     "syrupy>=5.3.1,<6.0.0",
     "ty>=0.0.40,<1.0.0",
-    "types-python-dateutil>=2.9.0.20260518,<3.0.0",
+    "types-python-dateutil>=2.9.0.20260716,<3.0.0",
     "wcmatch>=10.1,<11.0.0",
 ]
 
